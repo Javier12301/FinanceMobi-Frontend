@@ -4,7 +4,7 @@ import type { DelegationsResponse, InviteDelegationInput } from '../types/delega
 
 const KEY = ['delegations'] as const
 
-/** GET /api/delegations (no está en el contrato v1; fallará hasta que el backend lo exponga). */
+/** GET /api/delegations — delegaciones del usuario autenticado (v2). */
 export function useDelegations() {
   return useQuery({
     queryKey: KEY,

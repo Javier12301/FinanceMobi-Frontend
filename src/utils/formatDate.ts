@@ -37,16 +37,23 @@ export function dateGroupLabel(iso: string): string {
   return formatDate(iso)
 }
 
-/** Convierte un <input type="date"> (YYYY-MM-DD) a ISO 8601 con hora actual. */
-export function dateInputToIso(dateStr: string): string {
-  if (!dateStr) return new Date().toISOString()
-  const now = new Date()
-  const d = new Date(dateStr)
-  d.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), 0)
-  return d.toISOString()
+/** Date -> "YYYY-MM-DD" en hora LOCAL (no UTC: evita el corrimiento de día). */
+export function dateToInput(d: Date): string {
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${m}-${day}`
 }
 
-/** ISO -> "YYYY-MM-DD" para <input type="date">. */
+/** Convierte un <input type="date"> (YYYY-MM-DD) a ISO 8601 con hora actual.
+ *  ponytail: parsea como fecha LOCAL (new Date("YYYY-MM-DD") sería UTC y corre el día en TZ negativas). */
+export function dateInputToIso(dateStr: string): string {
+  if (!dateStr) return new Date().toISOString()
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const now = new Date()
+  return new Date(y, m - 1, d, now.getHours(), now.getMinutes(), now.getSeconds(), 0).toISOString()
+}
+
+/** ISO -> "YYYY-MM-DD" para <input type="date"> (en hora local). */
 export function isoToDateInput(iso: string): string {
-  return new Date(iso).toISOString().slice(0, 10)
+  return dateToInput(new Date(iso))
 }

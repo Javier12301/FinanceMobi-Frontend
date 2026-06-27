@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { ArrowLeftRight, Plus } from 'lucide-react'
+import { ArrowLeftRight, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
@@ -43,6 +44,7 @@ export function TransactionsPage() {
   const [walletId, setWalletId] = useState('all')
   const [type, setType] = useState('all')
   const [period, setPeriod] = useState<Period>('this')
+  const [search, setSearch] = useState('')
 
   const filters: TransactionFilters = {
     ...(walletId !== 'all' ? { walletId } : {}),
@@ -50,11 +52,15 @@ export function TransactionsPage() {
   }
   const { data: txns, isLoading } = useTransactions(filters)
 
-  // El contrato no filtra por movementType -> filtro en cliente.
-  const filtered = useMemo(
-    () => (txns ?? []).filter((t) => type === 'all' || t.movementType === type),
-    [txns, type],
-  )
+  // El contrato no filtra por movementType ni texto -> filtro en cliente.
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return (txns ?? []).filter(
+      (t) =>
+        (type === 'all' || t.movementType === type) &&
+        (!q || (t.description ?? '').toLowerCase().includes(q)),
+    )
+  }, [txns, type, search])
 
   // Agrupar por día.
   const groups = useMemo(() => {
@@ -84,43 +90,55 @@ export function TransactionsPage() {
       />
 
       {/* Filtros */}
-      <div className="mb-4 flex flex-wrap items-center gap-2.5 rounded-xl border bg-surface p-3">
-        <Select value={walletId} onValueChange={setWalletId}>
-          <SelectTrigger className="h-9 w-[150px] bg-background">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas las billeteras</SelectItem>
-            {wallets?.map((w) => (
-              <SelectItem key={w.id} value={w.id}>
-                {w.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="mb-4 flex flex-col gap-2.5 rounded-xl border bg-surface p-3">
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por descripción"
+            className="h-10 bg-background pl-9"
+          />
+        </div>
 
-        <Select value={type} onValueChange={setType}>
-          <SelectTrigger className="h-9 w-[150px] bg-background">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los tipos</SelectItem>
-            <SelectItem value="INCOME">Ingresos</SelectItem>
-            <SelectItem value="EXPENSE">Gastos</SelectItem>
-            <SelectItem value="TRANSFER">Transferencias</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap gap-2.5">
+          <Select value={walletId} onValueChange={setWalletId}>
+            <SelectTrigger className="h-10 min-w-[150px] flex-1 bg-background sm:flex-none sm:w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las billeteras</SelectItem>
+              {wallets?.map((w) => (
+                <SelectItem key={w.id} value={w.id}>
+                  {w.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
-          <SelectTrigger className="h-9 w-[140px] bg-background">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="this">Este mes</SelectItem>
-            <SelectItem value="last">Mes anterior</SelectItem>
-            <SelectItem value="all">Todo</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select value={type} onValueChange={setType}>
+            <SelectTrigger className="h-10 min-w-[140px] flex-1 bg-background sm:flex-none sm:w-[170px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los tipos</SelectItem>
+              <SelectItem value="INCOME">Ingresos</SelectItem>
+              <SelectItem value="EXPENSE">Gastos</SelectItem>
+              <SelectItem value="TRANSFER">Transferencias</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
+            <SelectTrigger className="h-10 min-w-[130px] flex-1 bg-background sm:flex-none sm:w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="this">Este mes</SelectItem>
+              <SelectItem value="last">Mes anterior</SelectItem>
+              <SelectItem value="all">Todo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Lista agrupada por día */}

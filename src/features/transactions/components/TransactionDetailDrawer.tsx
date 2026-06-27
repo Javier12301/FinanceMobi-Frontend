@@ -1,4 +1,4 @@
-import { Calendar, FileText, Pencil, Tag, Trash2, Wallet as WalletIcon, ExternalLink } from 'lucide-react'
+import { Calendar, Copy, FileText, Pencil, Tag, Trash2, Wallet as WalletIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Sheet,
@@ -10,28 +10,29 @@ import { Button } from '@/components/ui/button'
 import { IconBadge } from '@/components/elements/IconBadge'
 import { Money } from '@/components/elements/Money'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
-import { errorMessage, isApiError } from '@/config/api'
+import { errorMessage } from '@/config/api'
 import { formatDate, formatTime } from '@/utils/formatDate'
 import { useWallets } from '@/features/wallets'
 import { useCategories } from '@/features/categories'
 import { useOwnerStore } from '@/store/useOwnerStore'
 import { useTransactionDrawer } from '../useTransactionDrawer'
 import { useTransactionModal } from '../useTransactionModal'
-import { useDeleteTransaction } from '../api/useTransactionMutations'
-import { useAttachments } from '../api/useAttachments'
+import { useCreateTransaction, useDeleteTransaction } from '../api/useTransactionMutations'
 import { movementMeta } from '../movementMeta'
+import { AttachmentsPanel } from './AttachmentsPanel'
 
 export function TransactionDetailDrawer() {
   const tx = useTransactionDrawer((s) => s.tx)
   const close = useTransactionDrawer((s) => s.close)
   const openModal = useTransactionModal((s) => s.open)
+  const openDuplicate = useTransactionModal((s) => s.openDuplicate)
   const isDesktop = useIsDesktop()
   const isReadOnly = useOwnerStore((s) => s.isReadOnly)
 
   const { data: wallets } = useWallets()
   const { data: categories } = useCategories()
   const del = useDeleteTransaction()
-  const { data: attachments } = useAttachments(tx?.id ?? null)
+  const create = useCreateTransaction()
 
   if (!tx) return null
 
@@ -40,18 +41,28 @@ export function TransactionDetailDrawer() {
   const categoryName = categories?.find((c) => c.id === tx.categoryId)?.name ?? '—'
 
   const onDelete = () => {
+    const snapshot = tx // datos para deshacer (recrear)
     del.mutate(tx.id, {
       onSuccess: () => {
-        toast.success('Movimiento eliminado')
         close()
+        // ponytail: undo = recrear, no hay endpoint de restore
+        toast.success('Movimiento eliminado', {
+          action: {
+            label: 'Deshacer',
+            onClick: () =>
+              create.mutate({
+                walletId: snapshot.walletId,
+                categoryId: snapshot.categoryId,
+                amount: Number(snapshot.amount),
+                movementType: snapshot.movementType,
+                date: snapshot.date,
+                description: snapshot.description ?? undefined,
+                destinationWalletId: snapshot.destinationWalletId ?? undefined,
+              }),
+          },
+        })
       },
-      onError: (err) => {
-        if (isApiError(err) && err.notImplemented) {
-          toast.info('La eliminación de movimientos no está disponible aún')
-        } else {
-          toast.error(errorMessage(err))
-        }
-      },
+      onError: (err) => toast.error(errorMessage(err)),
     })
   }
 
@@ -76,42 +87,36 @@ export function TransactionDetailDrawer() {
           <DetailRow icon={Calendar} label="Fecha" value={`${formatDate(tx.date)} · ${formatTime(tx.date)}`} />
           <DetailRow icon={FileText} label="Descripción" value={tx.description || '—'} />
 
-          {attachments && attachments.length > 0 && (
-            <div className="m-4 flex items-center justify-between rounded-lg border p-3">
-              <div className="flex items-center gap-2.5">
-                <IconBadge icon={FileText} size="sm" />
-                <div className="text-xs">
-                  <div className="font-medium">Comprobante</div>
-                  <div className="text-muted-foreground">{attachments[0].mimeType}</div>
-                </div>
-              </div>
-              <a
-                href={`https://drive.google.com/file/d/${attachments[0].googleFileId}/view`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-primary"
-              >
-                <ExternalLink size={15} />
-              </a>
-            </div>
-          )}
+          {tx.movementType !== 'TRANSFER' && <AttachmentsPanel transactionId={tx.id} />}
         </div>
 
         {!isReadOnly && (
-          <div className="flex gap-2.5 border-t p-4">
+          <div className="flex flex-col gap-2.5 border-t p-4">
             <Button
               variant="outline"
-              className="flex-1 border-primary text-primary hover:bg-primary-soft"
+              className="w-full"
               onClick={() => {
-                openModal(tx)
+                openDuplicate(tx)
                 close()
               }}
             >
-              <Pencil size={15} /> Editar
+              <Copy size={15} /> Repetir
             </Button>
-            <Button variant="outline" className="flex-1 border-destructive text-destructive hover:bg-destructive/10" onClick={onDelete} disabled={del.isPending}>
-              <Trash2 size={15} /> Eliminar
-            </Button>
+            <div className="flex gap-2.5">
+              <Button
+                variant="outline"
+                className="flex-1 border-primary text-primary hover:bg-primary-soft"
+                onClick={() => {
+                  openModal(tx)
+                  close()
+                }}
+              >
+                <Pencil size={15} /> Editar
+              </Button>
+              <Button variant="outline" className="flex-1 border-destructive text-destructive hover:bg-destructive/10" onClick={onDelete} disabled={del.isPending}>
+                <Trash2 size={15} /> Eliminar
+              </Button>
+            </div>
           </div>
         )}
       </SheetContent>
