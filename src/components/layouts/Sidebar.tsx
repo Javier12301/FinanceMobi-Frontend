@@ -65,10 +65,11 @@ export function Sidebar() {
       <div className="border-t p-3.5">
         <div className="mb-2.5 flex items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[13px] font-semibold text-primary">
-            {(user?.email?.[0] ?? 'U').toUpperCase()}
+            {((user?.name ?? user?.email)?.[0] ?? 'U').toUpperCase()}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-xs font-semibold">{user?.email ?? 'Usuario'}</div>
+            <div className="truncate text-xs font-semibold">{user?.name ?? user?.email ?? 'Usuario'}</div>
+            {user?.name && <div className="truncate text-[11px] text-muted-foreground">{user.email}</div>}
           </div>
         </div>
         <button

@@ -26,21 +26,32 @@ export function useAttachments(transactionId: string | null) {
 }
 
 /**
- * POST /api/transactions/:id/attachments — Stub 501 en el contrato v1.
- * Se cablea para activarse cuando el backend defina límites de tipo/tamaño.
+ * POST /api/transactions/:id/attachments — sube 1+ archivos a Drive (v2).
+ * Límites del contrato: máx 3 por request, 5MB c/u, MIME jpeg/png/webp/pdf.
  */
 export function useUploadAttachment(transactionId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async (files: File[]) => {
       const form = new FormData()
-      form.append('file', file)
-      const { data } = await api.post<TransactionAttachment>(
+      for (const f of files) form.append('file', f)
+      const { data } = await api.post<TransactionAttachment[]>(
         `/transactions/${transactionId}/attachments`,
         form,
         { headers: { 'Content-Type': 'multipart/form-data' } },
       )
       return data
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: attachmentsKey(transactionId) }),
+  })
+}
+
+/** DELETE /api/transactions/:id/attachments/:attId — borra el archivo de Drive + DB (v2). */
+export function useDeleteAttachment(transactionId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (attachmentId: string) => {
+      await api.delete(`/transactions/${transactionId}/attachments/${attachmentId}`)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: attachmentsKey(transactionId) }),
   })

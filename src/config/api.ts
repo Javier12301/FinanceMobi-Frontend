@@ -58,3 +58,13 @@ export function isApiError(e: unknown): e is ApiError {
 export function errorMessage(e: unknown): string {
   return isApiError(e) ? e.message : 'Ocurrió un error inesperado'
 }
+
+/**
+ * True si el endpoint aún no está publicado por el backend (404) o es stub (501).
+ * Las features "dormidas" (recurrentes, presupuestos, PUT/DELETE categorías) lo usan
+ * para mostrar estado vacío/"próximamente" en vez de un error rojo.
+ * ponytail: una función, no un sistema de feature-flags.
+ */
+export function isNotAvailable(e: unknown): boolean {
+  return isApiError(e) && (e.status === 404 || e.notImplemented)
+}

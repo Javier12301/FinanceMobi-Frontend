@@ -4,10 +4,7 @@ import { api } from '@/config/api'
 import { useAuthStore } from '@/store/useAuthStore'
 import type { AuthResponse, RegisterInput } from '../types/auth'
 
-/**
- * POST /api/auth/register — registro con email/contraseña.
- * Nota: este endpoint no está en el contrato v1; fallará hasta que el backend lo exponga.
- */
+/** POST /api/auth/register — registro con name/email/contraseña (v2). Abre sesión directo. */
 export function useRegister() {
   const navigate = useNavigate()
   const setToken = useAuthStore((s) => s.setToken)

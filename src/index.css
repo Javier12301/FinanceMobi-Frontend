@@ -11,10 +11,10 @@
 :root {
   --radius: 0.625rem; /* 10px, igual que las cards del prototipo */
 
-  --background: #ffffff; /* --bg */
+  --background: #f5f6f8; /* --bg: off-white frío, no blanco agresivo */
   --foreground: #1a1a1a; /* --tx */
 
-  --card: #ffffff;
+  --card: #ffffff; /* las cards quedan blancas para resaltar sobre el fondo */
   --card-foreground: #1a1a1a;
 
   --popover: #ffffff;
@@ -23,10 +23,10 @@
   --primary: #3abfbf;
   --primary-foreground: #ffffff;
 
-  --secondary: #f7f7f7; /* --sf */
+  --secondary: #eceef2; /* --sf */
   --secondary-foreground: #1a1a1a;
 
-  --muted: #f7f7f7; /* --sf */
+  --muted: #eceef2; /* --sf */
   --muted-foreground: #6b7280; /* --t2 */
 
   --accent: #e8f9f9; /* --ps (teal suave) */
@@ -35,18 +35,18 @@
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
-  --border: #e5e7eb; /* --bd */
-  --input: #e5e7eb;
+  --border: #e3e6ea; /* --bd */
+  --input: #e3e6ea;
   --ring: #3abfbf;
 
   /* Tokens propios de FinanceVier */
   --success: #22c55e;
   --success-foreground: #ffffff;
   --primary-soft: #e8f9f9; /* --ps: fondo de chips/badges teal */
-  --surface: #f7f7f7; /* --sf: barras de filtro, thead, iconos */
-  --row-alt: #f7f7f7; /* --ra: filas alternas de tablas */
+  --surface: #eceef2; /* --sf: barras de filtro, thead, iconos */
+  --row-alt: #f5f6f8; /* --ra: filas alternas de tablas */
 
-  --sidebar: #f7f7f7; /* --sb */
+  --sidebar: #eceef2; /* --sb */
   --sidebar-foreground: #1a1a1a;
   --sidebar-primary: #3abfbf;
   --sidebar-primary-foreground: #ffffff;
@@ -57,41 +57,41 @@
 }
 
 .dark {
-  --background: #0f0f0f; /* --bg */
-  --foreground: #f0f0f0; /* --tx */
+  --background: #0e1116; /* --bg: slate frío en vez de negro plano */
+  --foreground: #e8eaed; /* --tx */
 
-  --card: #0f0f0f;
-  --card-foreground: #f0f0f0;
+  --card: #161b22; /* card elevada sobre el fondo */
+  --card-foreground: #e8eaed;
 
-  --popover: #141414;
-  --popover-foreground: #f0f0f0;
+  --popover: #161b22;
+  --popover-foreground: #e8eaed;
 
   --primary: #3abfbf;
   --primary-foreground: #ffffff;
 
-  --secondary: #1a1a1a; /* --sf */
-  --secondary-foreground: #f0f0f0;
+  --secondary: #1b212a; /* --sf */
+  --secondary-foreground: #e8eaed;
 
-  --muted: #1a1a1a;
-  --muted-foreground: #9ca3af; /* --t2 */
+  --muted: #1b212a;
+  --muted-foreground: #9aa4b2; /* --t2 */
 
-  --accent: rgba(58, 191, 191, 0.12); /* --ps */
-  --accent-foreground: #3abfbf;
+  --accent: rgba(58, 191, 191, 0.14); /* --ps */
+  --accent-foreground: #5fd4d4;
 
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
-  --border: #2d2d2d; /* --bd */
-  --input: #2d2d2d;
+  --border: #272e38; /* --bd */
+  --input: #272e38;
   --ring: #3abfbf;
 
   --success: #22c55e;
   --success-foreground: #ffffff;
-  --primary-soft: rgba(58, 191, 191, 0.12);
-  --surface: #1a1a1a;
+  --primary-soft: rgba(58, 191, 191, 0.14);
+  --surface: #1b212a;
   --row-alt: rgba(255, 255, 255, 0.04);
 
-  --sidebar: #141414; /* --sb */
+  --sidebar: #12161c; /* --sb */
   --sidebar-foreground: #f0f0f0;
   --sidebar-primary: #3abfbf;
   --sidebar-primary-foreground: #ffffff;

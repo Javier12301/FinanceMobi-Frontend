@@ -52,7 +52,7 @@ export function DelegationsSection() {
 
         {isError && (
           <p className="px-4 py-4 text-sm text-muted-foreground">
-            No se pudieron cargar las delegaciones (endpoint pendiente en el backend).
+            No se pudieron cargar las delegaciones.
           </p>
         )}
         {isLoading && <p className="px-4 py-4 text-sm text-muted-foreground">Cargando…</p>}

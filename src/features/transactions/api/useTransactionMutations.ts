@@ -39,9 +39,8 @@ export function useUpdateTransaction() {
 }
 
 /**
- * DELETE /api/transactions/:id
- * Stub 501 en el contrato v1: la política de borrado no está resuelta.
- * Se cablea igual; la UI maneja el error notImplemented.
+ * DELETE /api/transactions/:id — soft delete real (v2).
+ * Revierte balance y limpia adjuntos en el backend. 409 si tiene adjuntos y Drive no conectado.
  */
 export function useDeleteTransaction() {
   const invalidate = useInvalidateAfterTxn()

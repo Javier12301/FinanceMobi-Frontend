@@ -1,4 +1,5 @@
-import { LogOut, Moon, Sun } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import { ChevronRight, LogOut, Moon, Sun, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { useThemeStore } from '@/hooks/useTheme'
@@ -6,6 +7,7 @@ import { useAuthStore } from '@/store/useAuthStore'
 import { useLogout } from '@/features/auth'
 import { DriveSection } from '@/features/drive'
 import { DelegationsSection } from '@/features/delegations'
+import { RecurringSection } from '@/features/recurring'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <div className="mb-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{children}</div>
@@ -27,15 +29,34 @@ export function SettingsPage() {
           <SectionLabel>Perfil</SectionLabel>
           <div className="flex items-center gap-3.5 rounded-xl border bg-card px-5 py-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-soft text-xl font-semibold text-primary">
-              {(user?.email?.[0] ?? 'U').toUpperCase()}
+              {((user?.name ?? user?.email)?.[0] ?? 'U').toUpperCase()}
             </div>
             <div>
-              <div className="text-sm font-semibold">{user?.email?.split('@')[0] ?? 'Usuario'}</div>
+              <div className="text-sm font-semibold">{user?.name ?? user?.email?.split('@')[0] ?? 'Usuario'}</div>
               <div className="text-sm text-muted-foreground">{user?.email}</div>
             </div>
           </div>
         </section>
 
+        {/* Gestión */}
+        <section>
+          <SectionLabel>Gestión</SectionLabel>
+          <Link
+            to="/categories"
+            className="flex items-center justify-between rounded-xl border bg-card px-5 py-4 hover:bg-accent/40"
+          >
+            <div className="flex items-center gap-2.5">
+              <Tag size={16} className="text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Categorías</div>
+                <div className="text-xs text-muted-foreground">Creá y editá tus categorías</div>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-muted-foreground" />
+          </Link>
+        </section>
+
+        <RecurringSection />
         <DriveSection />
         <DelegationsSection />
 

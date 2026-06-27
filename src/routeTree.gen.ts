@@ -17,6 +17,7 @@ import { Route as AppWalletsRouteImport } from './routes/_app/wallets'
 import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppCategoriesRouteImport } from './routes/_app/categories'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -57,11 +58,17 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCategoriesRoute = AppCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/categories': typeof AppCategoriesRoute
   '/dashboard': typeof AppDashboardRoute
   '/settings': typeof AppSettingsRoute
   '/transactions': typeof AppTransactionsRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/categories': typeof AppCategoriesRoute
   '/dashboard': typeof AppDashboardRoute
   '/settings': typeof AppSettingsRoute
   '/transactions': typeof AppTransactionsRoute
@@ -82,6 +90,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/_app/categories': typeof AppCategoriesRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/transactions': typeof AppTransactionsRoute
@@ -93,6 +102,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/categories'
     | '/dashboard'
     | '/settings'
     | '/transactions'
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/categories'
     | '/dashboard'
     | '/settings'
     | '/transactions'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/register'
+    | '/_app/categories'
     | '/_app/dashboard'
     | '/_app/settings'
     | '/_app/transactions'
@@ -183,10 +195,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/categories': {
+      id: '/_app/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof AppCategoriesRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppCategoriesRoute: typeof AppCategoriesRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
@@ -194,6 +214,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCategoriesRoute: AppCategoriesRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTransactionsRoute: AppTransactionsRoute,

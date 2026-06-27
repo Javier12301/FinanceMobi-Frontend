@@ -4,7 +4,12 @@ export {
   useUpdateTransaction,
   useDeleteTransaction,
 } from './api/useTransactionMutations'
-export { useAttachments, useUploadAttachment } from './api/useAttachments'
+export {
+  useAttachments,
+  useUploadAttachment,
+  useDeleteAttachment,
+  type TransactionAttachment,
+} from './api/useAttachments'
 export { useTransactionModal } from './useTransactionModal'
 export { useTransactionDrawer } from './useTransactionDrawer'
 export { movementMeta } from './movementMeta'

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Link } from '@tanstack/react-router'
 import { Bell, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,12 @@ import {
   TransactionRow,
   type Transaction,
 } from '@/features/transactions'
+import { PendingRecurringCard } from '@/features/recurring'
+
+// ponytail: lazy => recharts queda fuera del chunk crítico del dashboard.
+const SummarySection = lazy(() =>
+  import('@/features/summary').then((m) => ({ default: m.SummarySection })),
+)
 
 function monthTotals(txns: Transaction[]) {
   const now = new Date()
@@ -53,7 +60,7 @@ export function DashboardPage() {
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-semibold">
-            Hola, <span className="font-bold">{user?.email?.split('@')[0] ?? 'Usuario'}</span>
+            Hola, <span className="font-bold">{user?.name ?? user?.email?.split('@')[0] ?? 'Usuario'}</span>
           </h1>
           {delegation && (
             <div className="mt-1 flex items-center gap-2">
@@ -72,11 +79,21 @@ export function DashboardPage() {
         <Bell size={20} className="text-muted-foreground" />
       </div>
 
+      {/* Recurrentes vencidos por confirmar (oculto si no hay / endpoint dormido) */}
+      <PendingRecurringCard />
+
       {/* Métricas */}
       <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <MetricCard label="Balance total" value={formatCurrency(totalBalance)} hint="Suma de todas las billeteras" />
         <MetricCard label="Ingresos del mes" value={formatCurrency(income)} valueClassName="text-success" />
         <MetricCard label="Gastos del mes" value={formatCurrency(expense)} valueClassName="text-destructive" />
+      </div>
+
+      {/* Resumen: gráficos por categoría + evolución + presupuestos */}
+      <div className="mb-5">
+        <Suspense fallback={<Skeleton className="h-48 rounded-xl" />}>
+          <SummarySection />
+        </Suspense>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[60fr_40fr]">
