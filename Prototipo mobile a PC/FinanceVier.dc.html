@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif}
+input,select,textarea,button{font-family:inherit}
+button{cursor:pointer;border:none;background:none}
+input,select,textarea{outline:none}
+select{appearance:none;-webkit-appearance:none}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes toastSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes overlayIn{from{opacity:0}to{opacity:1}}
+</style>
+</helmet>
+
+<div style="position:relative;height:100vh;overflow:hidden;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--tx)" onClick="{{ closeWalletMenu }}">
+
+<!-- ══════ LOGIN ══════ -->
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+<div style="height:100vh;display:flex;align-items:center;justify-content:center;background:var(--sf)">
+  <div style="width:420px;background:var(--bg);border-radius:12px;border:1px solid var(--bd);padding:40px;box-shadow:0 1px 3px rgba(0,0,0,0.06)">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:28px;font-weight:600;color:#3ABFBF;letter-spacing:-0.5px">FinanceVier</div>
+      <div style="color:var(--t2);font-size:14px;margin-top:5px">Gestioná tus finanzas personales</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:13px">
+      <div style="position:relative">
+        <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--t2);display:flex">{{ iMail }}</span>
+        <input type="email" placeholder="Email" style="width:100%;padding:11px 13px 11px 40px;border:1px solid var(--bd);border-radius:8px;font-size:14px;background:var(--bg);color:var(--tx)" />
+      </div>
+      <div style="position:relative">
+        <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--t2);display:flex">{{ iLock }}</span>
+        <input type="{{ pwdType }}" placeholder="Contraseña" style="width:100%;padding:11px 40px 11px 40px;border:1px solid var(--bd);border-radius:8px;font-size:14px;background:var(--bg);color:var(--tx)" />
+        <button onClick="{{ togglePwd }}" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--t2);display:flex">{{ eyeIcon }}</button>
+      </div>
+      <button onClick="{{ doLogin }}" style="width:100%;padding:12px;background:#3ABFBF;color:#fff;border-radius:8px;font-size:14px;font-weight:600;margin-top:2px">Iniciar sesión</button>
+      <div style="font-size:10px;color:var(--t2);text-align:right;font-family:monospace;margin-top:-6px">POST /api/auth/login</div>
+      <div style="display:flex;align-items:center;gap:10px;color:var(--t2);font-size:13px">
+        <div style="flex:1;height:1px;background:var(--bd)"></div><span>o</span><div style="flex:1;height:1px;background:var(--bd)"></div>
+      </div>
+      <button onClick="{{ doGoogleLogin }}" style="width:100%;padding:11px;border:1px solid var(--bd);border-radius:8px;font-size:14px;font-weight:500;background:var(--bg);color:var(--tx);display:flex;align-items:center;justify-content:center;gap:10px">
+        <span style="font-size:16px;font-weight:700;background:linear-gradient(135deg,#4285F4,#EA4335,#FBBC04,#34A853);-webkit-background-clip:text;-webkit-text-fill-color:transparent">G</span>
+        Continuar con Google
+      </button>
+      <div style="font-size:10px;color:var(--t2);text-align:right;font-family:monospace;margin-top:-6px">POST /api/auth/google</div>
+    </div>
+    <div style="text-align:center;margin-top:22px;font-size:14px;color:var(--t2)">¿No tenés cuenta? <button onClick="{{ goRegister }}" style="color:#3ABFBF;font-weight:500;font-size:14px">Registrate</button></div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ══════ REGISTER ══════ -->
+<sc-if value="{{ isRegister }}" hint-placeholder-val="{{ false }}">
+<div style="height:100vh;display:flex;align-items:center;justify-content:center;background:var(--sf)">
+  <div style="width:420px;background:var(--bg);border-radius:12px;border:1px solid var(--bd);padding:40px;box-shadow:0 1px 3px rgba(0,0,0,0.06)">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:28px;font-weight:600;color:#3ABFBF;letter-spacing:-0.5px">FinanceVier</div>
+      <div style="color:var(--t2);font-size:14px;margin-top:5px">Creá tu cuenta</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:12px;font-weight:500;color:var(--tx);display:block;margin-bottom:5px">Nombre</label>
+        <input type="text" placeholder="Ej: Javier López" style="width:100%;padding:10px 13px;border:1px solid var(--bd);border-radius:8px;font-size:14px;background:var(--bg);color:var(--tx)" />
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:500;color:var(--tx);display:block;margin-bottom:5px">Email</label>
+        <input type="email" defaultValue="javierlopez@mail" style="width:100%;padding:10px 13px;border:1px solid #EF4444;border-radius:8px;font-size:14px;background:var(--bg);color:var(--tx)" />
+        <div style="font-size:12px;color:#EF4444;margin-top:4px">Ingresá un email válido</div>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:500;color:var(--tx);display:block;margin-bottom:5px">Contraseña</label>
+        <div style="position:relative">
+          <input type="password" placeholder="Mínimo 8 caracteres" style="width:100%;padding:10px 38px 10px 13px;border:1px solid #EF4444;border-radius:8px;font-size:14px;background:var(--bg);color:var(--tx)" />
+          <button style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--t2);display:flex">{{ iEye }}</button>
+        </div>
+        <div style="font-size:12px;color:#EF4444;margin-top:4px">Mínimo 8 caracteres</div>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:500;color:var(--tx);display:block;margin-bottom:5px">Confirmar contraseña</label>
+        <div style="position:relative">
+          <input type="password" placeholder="Repetí tu contraseña" style="width:100%;padding:10px 38px 10px 13px;border:1px solid #EF4444;border-radius:8px;font-size:14px;background:var(--bg);color:var(--tx)" />
+          <button style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--t2);display:flex">{{ iEye }}</button>
+        </div>
+        <div style="font-size:12px;color:#EF4444;margin-top:4px">Las contraseñas no coinciden</div>
+      </div>
+      <button onClick="{{ doRegister }}" style="width:100%;padding:12px;background:#3ABFBF;color:#fff;border-radius:8px;font-size:14px;font-weight:600;margin-top:2px">Crear cuenta</button>
+      <div style="font-size:10px;color:var(--t2);text-align:right;font-family:monospace;margin-top:-6px">POST /api/auth/register</div>
+    </div>
+    <div style="text-align:center;margin-top:20px;font-size:14px;color:var(--t2)">¿Ya tenés cuenta? <button onClick="{{ goLogin }}" style="color:#3ABFBF;font-weight:500;font-size:14px">Iniciá sesión</button></div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ══════ APP SHELL ══════ -->
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;height:100vh;overflow:hidden">
+
+  <!-- ── SIDEBAR ── -->
+  <nav style="width:240px;flex-shrink:0;background:var(--sb);border-right:1px solid var(--bd);display:flex;flex-direction:column;height:100vh">
+
+    <!-- Logo -->
+    <div style="padding:20px 18px 14px;border-bottom:1px solid var(--bd)">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:32px;height:32px;background:#3ABFBF;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0">FV</div>
+        <span style="font-size:15px;font-weight:600;color:#3ABFBF;letter-spacing:-0.3px">FinanceVier</span>
+      </div>
+    </div>
+
+    <!-- Delegation badge -->
+    <sc-if value="{{ delegation }}" hint-placeholder-val="{{ false }}">
+    <div style="margin:10px 10px 0;padding:8px 10px;background:var(--ps);border-radius:8px;border:1px solid rgba(58,191,191,0.2)">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <span style="color:#3ABFBF;display:flex">{{ iUserSm }}</span>
+        <span style="font-size:11px;color:#3ABFBF;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Viendo: {{ delegName }}</span>
+      </div>
+      <button onClick="{{ returnToMyAcc }}" style="font-size:10px;color:var(--t2);text-decoration:underline">Volver a mi cuenta</button>
+    </div>
+    </sc-if>
+
+    <!-- Nav -->
+    <div style="padding:10px 10px 0;flex:1;overflow-y:auto">
+      <button onClick="{{ goDash }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:500;color:{{ navDashC }};background:{{ navDashBg }};text-align:left;margin-bottom:2px">
+        <span style="color:{{ navDashIC }};display:flex;flex-shrink:0">{{ iHome }}</span>Inicio
+      </button>
+      <button onClick="{{ goWal }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:500;color:{{ navWalC }};background:{{ navWalBg }};text-align:left;margin-bottom:2px">
+        <span style="color:{{ navWalIC }};display:flex;flex-shrink:0">{{ iWal }}</span>Billeteras
+      </button>
+      <button onClick="{{ goTxn }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:500;color:{{ navTxC }};background:{{ navTxBg }};text-align:left;margin-bottom:2px">
+        <span style="color:{{ navTxIC }};display:flex;flex-shrink:0">{{ iArr }}</span>Movimientos
+      </button>
+      <button onClick="{{ goSet }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:500;color:{{ navSetC }};background:{{ navSetBg }};text-align:left;margin-bottom:2px">
+        <span style="color:{{ navSetIC }};display:flex;flex-shrink:0">{{ iSettings }}</span>Ajustes
+      </button>
+    </div>
+
+    <!-- User footer -->
+    <div style="border-top:1px solid var(--bd);padding:14px 14px 16px">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--ps);display:flex;align-items:center;justify-content:center;color:#3ABFBF;font-weight:600;font-size:13px;flex-shrink:0">J</div>
+        <div style="min-width:0">
+          <div style="font-size:12px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Javier Ramírez</div>
+          <div style="font-size:11px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">javier@email.com</div>
+        </div>
+      </div>
+      <button onClick="{{ doLogout }}" style="width:100%;display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;color:#EF4444;font-size:12px;font-weight:500">
+        <span style="display:flex;flex-shrink:0">{{ iLogout }}</span>Cerrar sesión
+        <span style="font-size:9px;color:var(--t2);font-family:monospace;margin-left:auto">POST /api/auth/logout</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── MAIN CONTENT ── -->
+  <main style="flex:1;overflow-y:auto;background:var(--bg);height:100vh">
+  <div style="padding:32px;max-width:1400px;margin:0 auto">
+
+    <!-- DASHBOARD -->
+    <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+    <div data-screen-label="Dashboard">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+        <div>
+          <h1 style="font-size:20px;font-weight:600;color:var(--tx)">Inicio</h1>
+          <sc-if value="{{ delegation }}" hint-placeholder-val="{{ false }}">
+          <span style="display:inline-block;margin-top:4px;font-size:11px;background:var(--ps);color:#3ABFBF;padding:2px 10px;border-radius:20px;font-weight:500">Viendo cuenta de {{ delegName }}</span>
+          </sc-if>
+        </div>
+        <span style="color:var(--t2);display:flex">{{ iBell }}</span>
+      </div>
+
+      <!-- Metric cards -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+        <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Balance total</div>
+          <div style="font-size:26px;font-weight:600;color:var(--tx);letter-spacing:-0.5px">{{ totalBal }}</div>
+          <div style="font-size:11px;color:var(--t2);margin-top:5px">Suma de todas las billeteras</div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Ingresos del mes</div>
+          <div style="font-size:26px;font-weight:600;color:#22C55E;letter-spacing:-0.5px">{{ monthIncome }}</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:5px"><span style="color:#22C55E;display:flex">{{ iArrUp }}</span><span style="font-size:11px;color:var(--t2)">mayo 2024</span></div>
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Gastos del mes</div>
+          <div style="font-size:26px;font-weight:600;color:#EF4444;letter-spacing:-0.5px">{{ monthExpense }}</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:5px"><span style="color:#EF4444;display:flex">{{ iArrDown }}</span><span style="font-size:11px;color:var(--t2)">mayo 2024</span></div>
+        </div>
+      </div>
+
+      <!-- 2-col -->
+      <div style="display:grid;grid-template-columns:60fr 40fr;gap:16px">
+
+        <!-- Recent txns -->
+        <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:14px;font-weight:600;color:var(--tx)">Últimas transacciones</span>
+            <button onClick="{{ goTxn }}" style="font-size:12px;color:#3ABFBF;font-weight:500">Ver todas →</button>
+          </div>
+          <table style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr style="background:var(--sf)">
+                <th style="padding:9px 18px;text-align:left;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px">Descripción</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px">Fecha</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px">Categoría</th>
+                <th style="padding:9px 18px;text-align:right;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px">Monto</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ recentTxns }}" as="t" hint-placeholder-count="5">
+              <tr onClick="{{ t.open }}" style="border-bottom:1px solid var(--bd);cursor:pointer">
+                <td style="padding:11px 18px">
+                  <div style="display:flex;align-items:center;gap:9px">
+                    <span style="width:30px;height:30px;border-radius:7px;background:var(--sf);display:flex;align-items:center;justify-content:center;color:var(--t2);flex-shrink:0">{{ t.ico }}</span>
+                    <span style="font-size:13px;font-weight:500;color:var(--tx)">{{ t.desc }}</span>
+                  </div>
+                </td>
+                <td style="padding:11px 14px;font-size:12px;color:var(--t2);white-space:nowrap">{{ t.date }}</td>
+                <td style="padding:11px 14px;font-size:12px;color:var(--t2)">{{ t.cat }}</td>
+                <td style="padding:11px 18px;text-align:right;font-size:13px;font-weight:600;color:{{ t.amtColor }};white-space:nowrap">{{ t.amtPrefix }} {{ t.amtFmt }}</td>
+              </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Wallets list -->
+        <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.04);display:flex;flex-direction:column">
+          <div style="padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:14px;font-weight:600;color:var(--tx)">Mis billeteras</span>
+            <button onClick="{{ goWal }}" style="font-size:12px;color:#3ABFBF;font-weight:500">Ver todas →</button>
+          </div>
+          <div style="flex:1">
+            <sc-for list="{{ dashWallets }}" as="w" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--bd)">
+              <div style="width:36px;height:36px;border-radius:8px;background:var(--sf);display:flex;align-items:center;justify-content:center;color:var(--t2);flex-shrink:0">{{ w.ico }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:500;color:var(--tx)">{{ w.name }}</div>
+                <div style="font-size:11px;color:var(--t2)">{{ w.type }}</div>
+              </div>
+              <div style="font-size:14px;font-weight:600;color:var(--tx)">{{ w.balFmt }}</div>
+            </div>
+            </sc-for>
+          </div>
+          <div style="padding:12px 18px">
+            <button onClick="{{ openNewWallet }}" style="width:100%;padding:9px;border:1px dashed var(--bd);border-radius:8px;font-size:13px;font-weight:500;color:var(--t2);display:flex;align-items:center;justify-content:center;gap:6px;background:transparent">
+              {{ iPlus }} Nueva billetera
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- BILLETERAS -->
+    <sc-if value="{{ isWal }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Billeteras">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+        <h1 style="font-size:20px;font-weight:600;color:var(--tx)">Billeteras</h1>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;font-family:monospace;color:var(--t2)">GET /api/wallets</span>
+          <button onClick="{{ openNewWallet }}" style="display:flex;align-items:center;gap:6px;padding:9px 16px;background:#3ABFBF;color:#fff;border-radius:8px;font-size:13px;font-weight:500">
+            {{ iPlus }} Nueva billetera
+            <span style="font-size:9px;font-family:monospace;opacity:0.75;margin-left:2px">POST /api/wallets</span>
+          </button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+        <sc-for list="{{ walletCards }}" as="w" hint-placeholder-count="3">
+        <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);position:relative">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:40px;height:40px;border-radius:10px;background:var(--ps);display:flex;align-items:center;justify-content:center;color:#3ABFBF">{{ w.ico }}</div>
+              <div>
+                <div style="font-size:15px;font-weight:600;color:var(--tx)">{{ w.name }}</div>
+                <span style="font-size:10px;background:var(--ps);color:#3ABFBF;border-radius:20px;padding:2px 8px;font-weight:500">{{ w.type }}</span>
+              </div>
+            </div>
+            <div style="position:relative">
+              <button onClick="{{ w.toggleMenu }}" style="padding:4px 5px;border-radius:6px;color:var(--t2);display:flex">{{ iMoreV }}</button>
+              <sc-if value="{{ w.menuOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;right:0;top:28px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12);min-width:150px;z-index:20;animation:fadeUp 0.12s ease;padding:4px">
+                <button onClick="{{ w.doEdit }}" style="width:100%;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-size:13px;color:var(--tx);text-align:left">
+                  {{ iEdit }} Editar <span style="font-size:9px;color:var(--t2);font-family:monospace;margin-left:auto">PATCH /api/wallets/:id</span>
+                </button>
+                <button onClick="{{ w.doDelete }}" style="width:100%;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-size:13px;color:#EF4444;text-align:left">
+                  {{ iTrash }} Eliminar <span style="font-size:9px;color:var(--t2);font-family:monospace;margin-left:auto">DELETE /api/wallets/:id</span>
+                </button>
+              </div>
+              </sc-if>
+            </div>
+          </div>
+          <div style="font-size:24px;font-weight:600;color:var(--tx);letter-spacing:-0.5px">{{ w.balFmt }}</div>
+          <div style="font-size:11px;color:var(--t2);margin-top:4px">Saldo disponible</div>
+        </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- MOVIMIENTOS -->
+    <sc-if value="{{ isTxn }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Movimientos">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <h1 style="font-size:20px;font-weight:600;color:var(--tx)">Movimientos</h1>
+        <button onClick="{{ openNewTxn }}" style="display:flex;align-items:center;gap:6px;padding:9px 16px;background:#3ABFBF;color:#fff;border-radius:8px;font-size:13px;font-weight:500;opacity:{{ txnBtnOpacity }}">
+          {{ iPlus }} Registrar
+          <span style="font-size:9px;font-family:monospace;opacity:0.75;margin-left:2px">POST /api/transactions</span>
+        </button>
+      </div>
+
+      <!-- Filters -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:12px 16px;background:var(--sf);border-radius:10px;border:1px solid var(--bd);flex-wrap:wrap">
+        <span style="color:var(--t2);display:flex">{{ iFilter }}</span>
+        <div style="position:relative">
+          <select onChange="{{ setFilterWallet }}" style="padding:7px 28px 7px 10px;border:1px solid var(--bd);border-radius:8px;font-size:12px;background:var(--bg);color:var(--tx);cursor:pointer;min-width:120px">
+            <sc-for list="{{ walletFilterOpts }}" as="opt" hint-placeholder-count="4">
+              <option value="{{ opt.value }}">{{ opt.label }}</option>
+            </sc-for>
+          </select>
+          <span style="position:absolute;right:7px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--t2);display:flex">{{ iChevD }}</span>
+        </div>
+        <div style="position:relative">
+          <select onChange="{{ setFilterType }}" style="padding:7px 28px 7px 10px;border:1px solid var(--bd);border-radius:8px;font-size:12px;background:var(--bg);color:var(--tx);cursor:pointer;min-width:120px">
+            <option value="all">Todos los tipos</option>
+            <option value="ingreso">Ingresos</option>
+            <option value="gasto">Gastos</option>
+            <option value="transferencia">Transferencias</option>
+          </select>
+          <span style="position:absolute;right:7px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--t2);display:flex">{{ iChevD }}</span>
+        </div>
+        <div style="position:relative">
+          <select style="padding:7px 28px 7px 10px;border:1px solid var(--bd);border-radius:8px;font-size:12px;background:var(--bg);color:var(--tx);cursor:pointer;min-width:130px">
+            <option>Este mes</option><option>Mes anterior</option><option>Rango personalizado</option>
+          </select>
+          <span style="position:absolute;right:7px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--t2);display:flex">{{ iChevD }}</span>
+        </div>
+        <span style="font-size:10px;font-family:monospace;color:var(--t2);margin-left:auto">GET /api/transactions?walletId=&amp;type=&amp;from=&amp;to=</span>
+      </div>
+
+      <!-- Table -->
+      <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;min-width:820px">
+            <thead>
+              <tr style="background:var(--sf);border-bottom:1px solid var(--bd)">
+                <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap">Fecha</th>
+                <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px">Descripción</th>
+                <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px">Billetera</th>
+                <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px">Categoría</th>
+                <th style="padding:11px 16px;text-align:left;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px">Tipo</th>
+                <th style="padding:11px 16px;text-align:right;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px">Monto</th>
+                <th style="padding:11px 14px;text-align:center;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px">Comp.</th>
+                <th style="padding:11px 16px;text-align:center;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.5px">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ allTxns }}" as="t" hint-placeholder-count="8">
+              <tr onClick="{{ t.open }}" style="background:{{ t.rowBg }};border-bottom:1px solid var(--bd);cursor:pointer">
+                <td style="padding:11px 16px;white-space:nowrap">
+                  <div style="font-size:12px;color:var(--tx)">{{ t.date }}</div>
+                  <div style="font-size:10px;color:var(--t2)">{{ t.time }}</div>
+                </td>
+                <td style="padding:11px 16px">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="width:28px;height:28px;border-radius:6px;background:var(--sf);display:flex;align-items:center;justify-content:center;color:var(--t2);flex-shrink:0">{{ t.ico }}</span>
+                    <span style="font-size:13px;font-weight:500;color:var(--tx)">{{ t.desc }}</span>
+                  </div>
+                </td>
+                <td style="padding:11px 16px;font-size:12px;color:var(--t2)">{{ t.wallet }}</td>
+                <td style="padding:11px 16px;font-size:12px;color:var(--t2)">{{ t.cat }}</td>
+                <td style="padding:11px 16px">
+                  <span style="font-size:10px;font-weight:600;color:{{ t.typeColor }};background:var(--sf);border-radius:20px;padding:3px 8px">{{ t.typeLabel }}</span>
+                </td>
+                <td style="padding:11px 16px;text-align:right;font-size:13px;font-weight:600;color:{{ t.amtColor }};white-space:nowrap">{{ t.amtPrefix }} {{ t.amtFmt }}</td>
+                <td style="padding:11px 14px;text-align:center;color:var(--t2)">
+                  <sc-if value="{{ t.receipt }}" hint-placeholder-val="{{ false }}"><span style="display:flex;justify-content:center">{{ iClip }}</span></sc-if>
+                </td>
+                <td style="padding:11px 16px">
+                  <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+                    <button onClick="{{ t.doEdit }}" style="color:#3ABFBF;display:flex;padding:3px" title="Editar — PATCH /api/transactions/:id">{{ iEdit }}</button>
+                    <button onClick="{{ t.doDelete }}" style="color:#EF4444;display:flex;padding:3px" title="Eliminar — DELETE /api/transactions/:id">{{ iTrash }}</button>
+                  </div>
+                </td>
+              </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:12px 18px;border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12px;color:var(--t2)">{{ txnCount }} resultados · página 1 de 1</span>
+          <div style="display:flex;align-items:center;gap:4px">
+            <button style="padding:5px 10px;border:1px solid var(--bd);border-radius:6px;font-size:12px;color:var(--t2);background:var(--bg)">← Anterior</button>
+            <button style="padding:5px 10px;border:1px solid #3ABFBF;border-radius:6px;font-size:12px;color:#3ABFBF;background:var(--ps);font-weight:500">1</button>
+            <button style="padding:5px 10px;border:1px solid var(--bd);border-radius:6px;font-size:12px;color:var(--t2);background:var(--bg)">Siguiente →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- AJUSTES -->
+    <sc-if value="{{ isSet }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Ajustes">
+      <h1 style="font-size:20px;font-weight:600;color:var(--tx);margin-bottom:28px">Ajustes</h1>
+      <div style="display:flex;flex-direction:column;gap:24px;max-width:740px">
+
+        <!-- Perfil -->
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Perfil</div>
+          <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:18px 20px;display:flex;align-items:center;gap:14px">
+            <div style="width:52px;height:52px;border-radius:50%;background:var(--ps);display:flex;align-items:center;justify-content:center;color:#3ABFBF;font-size:20px;font-weight:600;flex-shrink:0">J</div>
+            <div>
+              <div style="font-size:15px;font-weight:600;color:var(--tx)">Javier Ramírez</div>
+              <div style="font-size:13px;color:var(--t2)">javier@email.com</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Google Drive -->
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Google Drive</div>
+          <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:38px;height:38px;border-radius:8px;background:var(--sf);display:flex;align-items:center;justify-content:center;color:var(--t2)">{{ iDrive }}</div>
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--tx)">Google Drive</div>
+                <div style="font-size:10px;color:var(--t2);font-family:monospace;margin-top:2px">GET /api/auth/google/drive</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">{{ driveStatusEl }}{{ driveBtnEl }}</div>
+          </div>
+        </div>
+
+        <!-- Delegación -->
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Delegación</div>
+          <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;overflow:hidden">
+
+            <div style="padding:13px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:13px;font-weight:600;color:var(--tx)">Personas con acceso a mi cuenta</span>
+              <button onClick="{{ openInvite }}" style="font-size:12px;color:#fff;padding:7px 13px;background:#3ABFBF;border-radius:8px;font-weight:500;display:flex;align-items:center;gap:5px">
+                {{ iPlus }} Invitar delegado
+                <span style="font-size:9px;font-family:monospace;opacity:0.8;margin-left:3px">POST /api/delegations</span>
+              </button>
+            </div>
+            <table style="width:100%;border-collapse:collapse">
+              <thead>
+                <tr style="background:var(--sf)">
+                  <th style="padding:9px 18px;text-align:left;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.4px">Nombre</th>
+                  <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.4px">Email</th>
+                  <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.4px">Rol</th>
+                  <th style="padding:9px 18px;text-align:left;font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:0.4px">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ myManagers }}" as="d" hint-placeholder-count="2">
+                <tr style="border-bottom:1px solid var(--bd)">
+                  <td style="padding:11px 18px">
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="width:26px;height:26px;border-radius:50%;background:var(--ps);display:flex;align-items:center;justify-content:center;color:#3ABFBF;font-size:11px;font-weight:600;flex-shrink:0">{{ d.initial }}</div>
+                      <span style="font-size:13px;font-weight:500;color:var(--tx)">{{ d.name }}</span>
+                    </div>
+                  </td>
+                  <td style="padding:11px 14px;font-size:12px;color:var(--t2)">{{ d.email }}</td>
+                  <td style="padding:11px 14px">
+                    <span style="font-size:10px;font-weight:600;border:1px solid;border-radius:4px;padding:2px 7px;color:{{ d.roleColor }};border-color:{{ d.roleColor }}">{{ d.role }}</span>
+                  </td>
+                  <td style="padding:11px 18px">
+                    <button onClick="{{ d.doRevoke }}" style="color:#EF4444;font-size:12px;display:flex;align-items:center;gap:4px">
+                      {{ iTrash }} Revocar
+                      <span style="font-size:9px;font-family:monospace;color:var(--t2);margin-left:3px">DELETE /api/delegations/:id</span>
+                    </button>
+                  </td>
+                </tr>
+                </sc-for>
+              </tbody>
+            </table>
+
+            <div style="padding:13px 18px;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)">
+              <span style="font-size:13px;font-weight:600;color:var(--tx)">Cuentas que gestiono</span>
+              <span style="font-size:10px;font-family:monospace;color:var(--t2);margin-left:8px">GET /api/delegations</span>
+            </div>
+            <sc-for list="{{ iManage }}" as="d" hint-placeholder-count="2">
+            <div style="padding:12px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:30px;height:30px;border-radius:50%;background:var(--sf);display:flex;align-items:center;justify-content:center;color:var(--t2);font-size:11px;font-weight:600">{{ d.initial }}</div>
+                <div>
+                  <div style="font-size:13px;font-weight:500;color:var(--tx)">{{ d.name }}</div>
+                  <div style="font-size:11px;color:var(--t2)">{{ d.email }}</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:10px;font-weight:600;border:1px solid;border-radius:4px;padding:2px 7px;color:{{ d.roleColor }};border-color:{{ d.roleColor }}">{{ d.role }}</span>
+                <button onClick="{{ d.doView }}" style="font-size:12px;color:#3ABFBF;font-weight:500;padding:6px 12px;border:1px solid #3ABFBF;border-radius:8px">Ver cuenta</button>
+              </div>
+            </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- Apariencia -->
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Apariencia</div>
+          <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:15px 20px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="color:var(--t2);display:flex">{{ darkIcon }}</span>
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--tx)">Modo oscuro</div>
+                <div style="font-size:12px;color:var(--t2)">Personaliza la apariencia de la app</div>
+              </div>
+            </div>
+            <button onClick="{{ toggleDark }}" style="width:44px;height:24px;border-radius:12px;background:{{ darkBtnBg }};position:relative;flex-shrink:0;transition:background 0.2s">
+              <span style="position:absolute;top:2px;left:{{ darkKnobLeft }};width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.2);transition:left 0.2s"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sesión -->
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Sesión</div>
+          <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:15px 20px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:13px;font-weight:500;color:var(--tx)">Cerrar sesión en todos los dispositivos</div>
+              <div style="font-size:10px;color:var(--t2);font-family:monospace;margin-top:2px">POST /api/auth/logout</div>
+            </div>
+            <button onClick="{{ doLogout }}" style="font-size:13px;color:#fff;padding:9px 16px;background:#EF4444;border-radius:8px;font-weight:500;display:flex;align-items:center;gap:6px">
+              <span style="display:flex">{{ iLogout }}</span> Cerrar sesión
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    </sc-if>
+
+  </div>
+  </main>
+</div>
+</sc-if>
+
+<!-- ══════ MODAL OVERLAY ══════ -->
+<sc-if value="{{ hasModal }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:center;justify-content:center;animation:overlayIn 0.15s ease">
+
+  <!-- Nueva / Editar Billetera -->
+  <sc-if value="{{ mWallet }}" hint-placeholder-val="{{ true }}">
+  <div style="width:480px;background:var(--bg);border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.18);overflow:hidden;animation:fadeUp 0.15s ease">
+    <div style="padding:18px 22px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:15px;font-weight:600;color:var(--tx)">Nueva billetera</div>
+        <div style="font-size:10px;font-family:monospace;color:var(--t2);margin-top:2px">POST /api/wallets</div>
+      </div>
+      <button onClick="{{ closeModal }}" style="color:var(--t2);display:flex">{{ iX }}</button>
+    </div>
+    <div style="padding:22px;display:flex;flex-direction:column;gap:15px">
+      <div>
+        <label style="font-size:12px;font-weight:500;color:var(--tx);display:block;margin-bottom:5px">Nombre</label>
+        <input type="text" placeholder="Ej: Caja diaria" style="width:100%;padding:9px 12px;border:1px solid var(--bd);border-radius:8px;font-size:13px;background:var(--bg);color:var(--tx)" />
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:500;color:var(--tx);display:block;margin-bottom:7px">Tipo</label>
+        <div style="display:flex;border:1px solid var(--bd);border-radius:8px;overflow:hidden">
+          <button onClick="{{ setWTypeEfectivo }}" style="flex:1;padding:9px;font-size:12px;font-weight:500;background:{{ wTypeBgE }};color:{{ wTypeCE }};border-right:1px solid var(--bd)">Efectivo</button>
+          <button onClick="{{ setWTypeBanco }}" style="flex:1;padding:9px;font-size:12px;font-weight:500;background:{{ wTypeBgB }};color:{{ wTypeCB }};border-right:1px solid var(--bd)">Banco</button>
+          <button onClick="{{ setWTypeVirtual }}" style="flex:1;padding:9px;font-size:12px;font-weight:500;background:{{ wTypeBgV }};color:{{ wTypeCV }}">Virtual</button>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:500;color:var(--tx);display:block;margin-bottom:5px">Descripción <span style="font-weight:400;color:var(--t2)">(opcional)</span></label>
+        <textarea placeholder="Ej: Dinero para gastos diarios" rows="2" style="width:100%;padding:9px 12px;border:1px solid var(--bd);border-radius:8px;font-size:13px;background:var(--bg);color:var(--tx);resize:none"></textarea>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:500;color:var(--tx);display:block;margin-bottom:5px">Saldo inicial</label>
+        <div style="position:relative">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--t2);font-size:13px">$</span>
+          <input type="number" placeholder="0" style="width:100%;padding:9px 12px 9px 24px;border:1px solid var(--bd);border-radius:8px;font-size:13px;background:var(--bg);color:var(--tx)" />
+        </div>
+      </div>
+    </div>
+    <div style="padding:14px 22px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:10px">
+      <button onClick="{{ closeModal }}" style="padding:9px 18px;border:1px solid var(--bd);border-radius:8px;font-size:13px;color:var(--t2);background:var(--bg)">Cancelar</button>
+      <button onClick="{{ saveWallet }}" style="padding:9px 18px;background:#3ABFBF;color:#fff;border-radius:8px;font-size:13px;font-weight:500">Guardar</button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- Registrar Movimiento -->
+  <sc-if value="{{ mTxn }}" hint-placeholder-val="{{ false }}">
+  <div style="width:520px;background:var(--bg);border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.18);overflow:hidden;animation:fadeUp 0.15s ease">
+    <div style="padding:18px 22px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:15px;font-weight:600;color:var(--tx)">Registrar movimiento</div>
+        <div style="font-size:12px;color:var(--t2);margin-top:2px">Paso {{ txStep }} — {{ txStepLabel }}</div>
+      </div>
+      <button onClick="{{ closeModal }}" style="color:var(--t2);display:flex">{{ iX }}</button>
+    </div>
+
+    <!-- Step 1 -->
+    <sc-if value="{{ txS1 }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:22px;display:flex;flex-direction:column;gap:10px">
+      <button onClick="{{ selectGasto }}" style="display:flex;align-items:center;gap:14px;padding:15px 18px;border:2px solid var(--bd);border-radius:10px;font-size:14px;font-weight:500;color:var(--tx);background:var(--bg);text-align:left">
+        <span style="width:38px;height:38px;border-radius:50%;border:2px solid #EF4444;display:flex;align-items:center;justify-content:center;color:#EF4444;flex-shrink:0">{{ iArrDown }}</span>Gasto
+      </button>
+      <button onClick="{{ selectIngreso }}" style="display:flex;align-items:center;gap:14px;padding:15px 18px;border:2px solid var(--bd);border-radius:10px;font-size:14px;font-weight:500;color:var(--tx);background:var(--bg);text-align:left">
+        <span style="width:38px;height:38px;border-radius:50%;border:2px solid #22C55E;display:flex;align-items:center;justify-content:center;color:#22C55E;flex-shrink:0">{{ iArrUp }}</span>Ingreso
+      </button>
+      <button onClick="{{ selectTransfer }}" style="display:flex;align-items:center;gap:14px;padding:15px 18px;border:2px solid var(--bd);border-radius:10px;font-size:14px;font-weight:500;color:var(--tx);background:var(--bg);text-align:left">
+        <span style="width:38px;height:38px;border-radius:50%;border:2px solid var(--t2);display:flex;align-items:center;justify-content:center;color:var(--t2);flex-shrink:0">{{ iArr }}</span>Transferencia
+      </button>
+    </div>
+    </sc-if>
+
+    <!-- Step 2 Gasto / Ingreso -->
+    <sc-if value="{{ txGastoOrIngreso }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:22px;display:flex;flex-direction:column;gap:12px;max-height:420px;overflow-y:auto">
+      <div style="background:var(--sf);border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:var(--t2);margin-bottom:6px">Monto</div>
+        <input type="number" placeholder="0" style="font-size:28px;font-weight:600;color:var(--tx);background:transparent;border:none;text-align:center;width:100%" />
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--bd);border-radius:8px">
+        <span style="color:var(--t2);display:flex;flex-shrink:0">{{ iWal }}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-weight:500;color:var(--tx)">Billetera</div>
+          <select style="font-size:13px;color:var(--t2);background:transparent;border:none;width:100%;cursor:pointer;margin-top:1px">
+            <sc-for list="{{ walletNames }}" as="w" hint-placeholder-count="3"><option>{{ w.name }}</option></sc-for>
+          </select>
+        </div>
+        <span style="font-size:9px;font-family:monospace;color:var(--t2)">GET /api/wallets</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--bd);border-radius:8px">
+        <span style="color:var(--t2);display:flex;flex-shrink:0">{{ iTag }}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-weight:500;color:var(--tx)">Categoría</div>
+          <select style="font-size:13px;color:var(--t2);background:transparent;border:none;width:100%;cursor:pointer;margin-top:1px">
+            <sc-for list="{{ categories }}" as="cat" hint-placeholder-count="5"><option>{{ cat }}</option></sc-for>
+          </select>
+        </div>
+        <span style="font-size:9px;font-family:monospace;color:var(--t2)">GET /api/categories</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--bd);border-radius:8px">
+        <span style="color:var(--t2);display:flex;flex-shrink:0">{{ iFileTxt }}</span>
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:500;color:var(--tx)">Descripción <span style="font-weight:400;color:var(--t2)">(opcional)</span></div>
+          <input type="text" placeholder="Compra semanal" style="font-size:13px;color:var(--t2);background:transparent;border:none;width:100%;margin-top:1px" />
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--bd);border-radius:8px">
+        <span style="color:var(--t2);display:flex;flex-shrink:0">{{ iCal }}</span>
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:500;color:var(--tx)">Fecha</div>
+          <input type="date" defaultValue="2024-05-21" style="font-size:13px;color:var(--t2);background:transparent;border:none;width:100%;margin-top:1px" />
+        </div>
+      </div>
+      <div onClick="{{ toggleAttachment }}" style="display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid {{ attachBorder }};border-radius:8px;background:{{ attachBg }};cursor:pointer">
+        <span style="color:{{ attachIconColor }};display:flex;flex-shrink:0">{{ iClip }}</span>
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:500;color:{{ attachTitleColor }}">Adjuntar comprobante</div>
+          <div style="font-size:12px;color:var(--t2);margin-top:1px">{{ attachMsg }}</div>
+        </div>
+        <span style="font-size:9px;font-family:monospace;color:var(--t2)">cámara / galería</span>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- Step 2 Transferencia -->
+    <sc-if value="{{ txTransfer }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:22px;display:flex;flex-direction:column;gap:12px">
+      <div style="background:var(--sf);border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:var(--t2);margin-bottom:6px">Monto</div>
+        <input type="number" placeholder="0" style="font-size:28px;font-weight:600;color:var(--tx);background:transparent;border:none;text-align:center;width:100%" />
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--bd);border-radius:8px">
+        <span style="color:#EF4444;display:flex;flex-shrink:0">{{ iArrDown }}</span>
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:500;color:var(--tx)">Desde</div>
+          <select style="font-size:13px;color:var(--t2);background:transparent;border:none;width:100%;cursor:pointer;margin-top:1px">
+            <sc-for list="{{ walletNames }}" as="w" hint-placeholder-count="3"><option>{{ w.name }}</option></sc-for>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--bd);border-radius:8px">
+        <span style="color:#22C55E;display:flex;flex-shrink:0">{{ iArrUp }}</span>
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:500;color:var(--tx)">Hacia</div>
+          <select style="font-size:13px;color:var(--t2);background:transparent;border:none;width:100%;cursor:pointer;margin-top:1px">
+            <sc-for list="{{ walletNames }}" as="w" hint-placeholder-count="3"><option>{{ w.name }}</option></sc-for>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--bd);border-radius:8px">
+        <span style="color:var(--t2);display:flex;flex-shrink:0">{{ iFileTxt }}</span>
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:500;color:var(--tx)">Descripción <span style="font-weight:400;color:var(--t2)">(opcional)</span></div>
+          <input type="text" placeholder="Ej: Pago cuota" style="font-size:13px;color:var(--t2);background:transparent;border:none;width:100%;margin-top:1px" />
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--bd);border-radius:8px">
+        <span style="color:var(--t2);display:flex;flex-shrink:0">{{ iCal }}</span>
+        <div style="flex:1">
+          <div style="font-size:11px;font-weight:500;color:var(--tx)">Fecha</div>
+          <input type="date" style="font-size:13px;color:var(--t2);background:transparent;border:none;width:100%;margin-top:1px" />
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- Step 2 footer -->
+    <sc-if value="{{ txS2 }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:14px 22px;border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+      <button onClick="{{ backTxStep }}" style="font-size:12px;color:var(--t2);padding:8px 13px;border:1px solid var(--bd);border-radius:8px;background:var(--bg)">← Atrás</button>
+      <div style="display:flex;gap:8px">
+        <button onClick="{{ closeModal }}" style="padding:9px 16px;border:1px solid var(--bd);border-radius:8px;font-size:13px;color:var(--t2);background:var(--bg)">Cancelar</button>
+        <button onClick="{{ saveTxn }}" style="padding:9px 18px;background:#3ABFBF;color:#fff;border-radius:8px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px">
+          {{ txSubmitLabel }}
+          <span style="font-size:9px;font-family:monospace;opacity:0.75">POST /api/transactions</span>
+        </button>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <!-- Confirmar Eliminación -->
+  <sc-if value="{{ mConfirm }}" hint-placeholder-val="{{ false }}">
+  <div style="width:400px;background:var(--bg);border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.18);padding:28px;animation:fadeUp 0.15s ease">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:46px;height:46px;border-radius:50%;background:#FEF2F2;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;color:#EF4444">{{ iTrash }}</div>
+      <div style="font-size:15px;font-weight:600;color:var(--tx)">Eliminar {{ modalLabel }}</div>
+      <div style="font-size:13px;color:var(--t2);margin-top:6px;line-height:1.5">¿Estás seguro que querés eliminar <strong style="color:var(--tx)">{{ modalName }}</strong>? Esta acción no se puede deshacer.</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onClick="{{ closeModal }}" style="flex:1;padding:10px;border:1px solid var(--bd);border-radius:8px;font-size:13px;color:var(--t2);background:var(--bg)">Cancelar</button>
+      <button onClick="{{ doConfirmDelete }}" style="flex:1;padding:10px;background:#EF4444;color:#fff;border-radius:8px;font-size:13px;font-weight:500">Eliminar</button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- Invitar Delegado -->
+  <sc-if value="{{ mInvite }}" hint-placeholder-val="{{ false }}">
+  <div style="width:420px;background:var(--bg);border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.18);overflow:hidden;animation:fadeUp 0.15s ease">
+    <div style="padding:18px 22px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:15px;font-weight:600;color:var(--tx)">Invitar delegado</div>
+        <div style="font-size:10px;font-family:monospace;color:var(--t2);margin-top:2px">POST /api/delegations</div>
+      </div>
+      <button onClick="{{ closeModal }}" style="color:var(--t2);display:flex">{{ iX }}</button>
+    </div>
+    <div style="padding:22px;display:flex;flex-direction:column;gap:15px">
+      <div>
+        <label style="font-size:12px;font-weight:500;color:var(--tx);display:block;margin-bottom:5px">Email</label>
+        <input type="email" placeholder="delegado@email.com" style="width:100%;padding:9px 12px;border:1px solid var(--bd);border-radius:8px;font-size:13px;background:var(--bg);color:var(--tx)" />
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:500;color:var(--tx);display:block;margin-bottom:7px">Rol</label>
+        <div style="display:flex;border:1px solid var(--bd);border-radius:8px;overflow:hidden">
+          <button style="flex:1;padding:9px;font-size:12px;font-weight:600;background:var(--ps);color:#3ABFBF;border-right:1px solid var(--bd)">SUPERVISOR</button>
+          <button style="flex:1;padding:9px;font-size:12px;font-weight:600;background:var(--bg);color:var(--t2)">ASESOR</button>
+        </div>
+        <div style="font-size:11px;color:var(--t2);margin-top:8px;display:flex;flex-direction:column;gap:3px">
+          <div>· <strong style="color:var(--tx)">SUPERVISOR</strong>: puede ver, crear, editar y eliminar</div>
+          <div>· <strong style="color:var(--tx)">ASESOR</strong>: solo lectura</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:14px 22px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:10px">
+      <button onClick="{{ closeModal }}" style="padding:9px 16px;border:1px solid var(--bd);border-radius:8px;font-size:13px;color:var(--t2);background:var(--bg)">Cancelar</button>
+      <button onClick="{{ saveInvite }}" style="padding:9px 16px;background:#3ABFBF;color:#fff;border-radius:8px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px">
+        <span style="display:flex">{{ iSend }}</span> Enviar invitación
+      </button>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</sc-if>
+
+<!-- ══════ DRAWER ══════ -->
+<sc-if value="{{ hasDrawer }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:100">
+  <div onClick="{{ closeDrawer }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.4)"></div>
+  <div style="position:absolute;right:0;top:0;bottom:0;width:420px;background:var(--bg);border-left:1px solid var(--bd);overflow-y:auto;animation:slideRight 0.2s ease;display:flex;flex-direction:column">
+    <div style="padding:18px 22px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:1">
+      <span style="font-size:14px;font-weight:600;color:var(--tx)">Detalle de transacción</span>
+      <button onClick="{{ closeDrawer }}" style="color:var(--t2);display:flex">{{ iX }}</button>
+    </div>
+    <div style="padding:22px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:14px">
+      <div style="width:46px;height:46px;border-radius:12px;background:var(--sf);display:flex;align-items:center;justify-content:center;color:var(--t2);flex-shrink:0">{{ drawerIco }}</div>
+      <div>
+        <div style="font-size:16px;font-weight:600;color:var(--tx)">{{ drawerDesc }}</div>
+        <div style="font-size:20px;font-weight:600;color:{{ drawerAmtColor }};margin-top:3px">{{ drawerPrefix }} {{ drawerAmt }}</div>
+      </div>
+    </div>
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--bd)">
+        <div style="display:flex;align-items:center;gap:9px;color:var(--t2)"><span style="display:flex">{{ iWal }}</span><span style="font-size:13px">Billetera</span></div>
+        <span style="font-size:13px;font-weight:500;color:var(--tx)">{{ drawerWallet }}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--bd)">
+        <div style="display:flex;align-items:center;gap:9px;color:var(--t2)"><span style="display:flex">{{ iTag }}</span><span style="font-size:13px">Categoría</span></div>
+        <span style="font-size:13px;font-weight:500;color:var(--tx)">{{ drawerCat }}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--bd)">
+        <div style="display:flex;align-items:center;gap:9px;color:var(--t2)"><span style="display:flex">{{ iCal }}</span><span style="font-size:13px">Fecha</span></div>
+        <span style="font-size:13px;font-weight:500;color:var(--tx)">{{ drawerDate }} · {{ drawerTime }}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--bd)">
+        <div style="display:flex;align-items:center;gap:9px;color:var(--t2)"><span style="display:flex">{{ iFileTxt }}</span><span style="font-size:13px">Descripción</span></div>
+        <span style="font-size:13px;font-weight:500;color:var(--tx)">{{ drawerDesc }}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--bd)">
+        <div style="display:flex;align-items:center;gap:9px;color:var(--t2)"><span style="display:flex">{{ iUserSm }}</span><span style="font-size:13px">Creado por</span></div>
+        <div style="text-align:right">
+          <div style="font-size:13px;font-weight:500;color:var(--tx)">María López</div>
+          <div style="font-size:11px;color:var(--t2)">{{ drawerDate }} · {{ drawerTime }}</div>
+        </div>
+      </div>
+
+      <sc-if value="{{ drawerHasReceipt }}" hint-placeholder-val="{{ false }}">
+      <div style="margin:14px 22px;padding:11px;border:1px solid var(--bd);border-radius:8px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:34px;height:34px;border-radius:6px;background:var(--sf);display:flex;align-items:center;justify-content:center;color:var(--t2)">{{ iFileTxt }}</div>
+          <div>
+            <div style="font-size:12px;font-weight:500;color:var(--tx)">Ver comprobante</div>
+            <div style="font-size:11px;color:var(--t2)">IMG_20240512_1832.jpg</div>
+          </div>
+        </div>
+        <button style="color:#3ABFBF;display:flex">{{ iExtLink }}</button>
+      </div>
+      </sc-if>
+
+      <div style="margin:14px 22px 0;border:1px solid var(--bd);border-radius:8px;overflow:hidden">
+        <button onClick="{{ toggleHistory }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 14px;color:var(--tx);background:var(--bg)">
+          <div style="display:flex;align-items:center;gap:8px"><span style="display:flex">{{ iClock }}</span><span style="font-size:13px;font-weight:500">Historial de cambios</span></div>
+          <span style="color:var(--t2);display:flex">{{ iChevD }}</span>
+        </button>
+        <sc-if value="{{ historyOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:11px 14px;border-top:1px solid var(--bd);background:var(--sf)">
+          <div style="font-size:12px;color:var(--t2)">Sin cambios registrados para esta transacción.</div>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <div style="padding:16px 22px;border-top:1px solid var(--bd);display:flex;gap:10px;background:var(--bg)">
+      <button onClick="{{ openNewTxn }}" style="flex:1;padding:10px;border:1px solid #3ABFBF;border-radius:8px;font-size:13px;color:#3ABFBF;font-weight:500;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--bg)">
+        {{ iEdit }} Editar <span style="font-size:9px;font-family:monospace;opacity:0.7;margin-left:2px">PATCH /api/transactions/:id</span>
+      </button>
+      <button onClick="{{ closeDrawer }}" style="flex:1;padding:10px;border:1px solid #EF4444;border-radius:8px;font-size:13px;color:#EF4444;font-weight:500;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--bg)">
+        {{ iTrash }} Eliminar <span style="font-size:9px;font-family:monospace;opacity:0.7;margin-left:2px">DELETE /api/transactions/:id</span>
+      </button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ══════ TOAST ══════ -->
+<sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;top:22px;right:22px;z-index:200;max-width:360px;background:{{ toastBg }};color:{{ toastC }};border-radius:8px;padding:11px 15px;display:flex;align-items:center;gap:9px;box-shadow:0 4px 20px rgba(0,0,0,0.2);animation:toastSlide 0.2s ease;font-size:13px;font-weight:500">
+  <span style="display:flex;flex-shrink:0">{{ toastIcon }}</span>
+  {{ toastMsg }}
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1920,&quot;height&quot;:1080}}">
+class Component extends DCLogic {
+  state = {
+    screen: 'login',
+    darkMode: false,
+    modal: null,
+    modalData: null,
+    drawerOpen: false,
+    drawerTx: null,
+    toast: null,
+    toastType: 'success',
+    txStep: 1,
+    txType: null,
+    showPwd: false,
+    walletMenuOpen: null,
+    filterWallet: 'all',
+    filterType: 'all',
+    delegationActive: true,
+    delegationRole: 'supervisor',
+    delegationName: 'María López',
+    historyOpen: false,
+    driveConnected: true,
+    wType: 'Efectivo',
+    tAttachment: false,
+  }
+
+  walletData = [
+    {id:1, name:'Caja diaria',  type:'Efectivo', balance:120000},
+    {id:2, name:'Santander',    type:'Banco',    balance:1540000},
+    {id:3, name:'Mercado Pago', type:'Virtual',  balance:790300},
+  ]
+
+  txData = [
+    {id:1,  date:'12 may 2024', time:'11:23', desc:'Supermercado',      wallet:'Efectivo',    cat:'Alimentos',      type:'gasto',   amount:45800,  receipt:false, icon:'cart'},
+    {id:2,  date:'12 may 2024', time:'09:00', desc:'Transferencia sueldo', wallet:'Santander', cat:'Ingresos',      type:'ingreso', amount:780000, receipt:true,  icon:'arrows'},
+    {id:3,  date:'12 may 2024', time:'08:15', desc:'Cafetería',          wallet:'Mercado Pago',cat:'Alimentos',      type:'gasto',   amount:8500,   receipt:false, icon:'coffee'},
+    {id:4,  date:'11 may 2024', time:'21:47', desc:'Taxi',               wallet:'Mercado Pago',cat:'Transporte',     type:'gasto',   amount:18500,  receipt:false, icon:'car'},
+    {id:5,  date:'11 may 2024', time:'17:30', desc:'Ropa',               wallet:'Mercado Pago',cat:'Indumentaria',   type:'gasto',   amount:62300,  receipt:false, icon:'shirt'},
+    {id:6,  date:'11 may 2024', time:'12:05', desc:'Farmacia',           wallet:'Efectivo',    cat:'Salud',          type:'ingreso', amount:24900,  receipt:false, icon:'pill'},
+    {id:7,  date:'10 may 2024', time:'10:00', desc:'Pago cliente',       wallet:'Santander',   cat:'Ingresos',       type:'ingreso', amount:150000, receipt:true,  icon:'user'},
+    {id:8,  date:'09 may 2024', time:'15:30', desc:'Netflix',            wallet:'Mercado Pago',cat:'Entretenimiento',type:'gasto',   amount:3500,   receipt:false, icon:'monitor'},
+    {id:9,  date:'08 may 2024', time:'11:00', desc:'Supermercado',       wallet:'Efectivo',    cat:'Alimentos',      type:'gasto',   amount:35000,  receipt:false, icon:'cart'},
+    {id:10, date:'07 may 2024', time:'09:30', desc:'Freelance',          wallet:'Santander',   cat:'Ingresos',       type:'ingreso', amount:200000, receipt:true,  icon:'briefcase'},
+  ]
+
+  delegData = {
+    managers: [
+      {id:1, name:'María López',   email:'maria.lopez@email.com',   role:'SUPERVISOR'},
+      {id:2, name:'Carlos Sánchez',email:'carlos.sanchez@email.com',role:'ASESOR'},
+    ],
+    iManage: [
+      {id:1, name:'Ana Torres',    email:'ana.torres@email.com',    role:'SUPERVISOR'},
+      {id:2, name:'Luis Martínez', email:'luis.martinez@email.com', role:'ASESOR'},
+    ],
+  }
+
+  categories = ['Alimentos','Transporte','Entretenimiento','Salud','Indumentaria','Servicios','Ingresos','Otro']
+
+  // ─── Icon helper ────────────────────────────────
+  ic(name, sz = 18) {
+    const p = {
+      home:     '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+      wallet:   '<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>',
+      arrows:   '<path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/>',
+      settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+      bell:     '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+      eye:      '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+      'eye-off':'<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>',
+      plus:     '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+      x:        '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+      morev:    '<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>',
+      edit:     '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+      trash:    '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+      chevd:    '<polyline points="6 9 12 15 18 9"/>',
+      chevr:    '<polyline points="9 18 15 12 9 6"/>',
+      logout:   '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+      user:     '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+      mail:     '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>',
+      lock:     '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+      tag:      '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
+      calendar: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+      clip:     '<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+      arrup:    '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>',
+      arrdown:  '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>',
+      cart:     '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>',
+      coffee:   '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>',
+      car:      '<path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+      shirt:    '<path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/>',
+      pill:     '<path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/>',
+      coins:    '<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><line x1="16.71" y1="13.88" x2="13.45" y2="17.15"/>',
+      landmark: '<line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/>',
+      cc:       '<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
+      monitor:  '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+      briefcase:'<rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+      clock:    '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+      check:    '<polyline points="20 6 9 17 4 12"/>',
+      moon:     '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+      sun:      '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>',
+      filetxt:  '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+      extlink:  '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
+      drive:    '<path d="M3 20.5h18l-4-7H7zm9-16L4 18h4.5l4.5-8 4.5 8H22z"/><path d="M8.5 18l3.5-6 3.5 6"/>',
+      filter:   '<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>',
+      send:     '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+    }
+    const svg = p[name] || '<circle cx="12" cy="12" r="4"/>'
+    return React.createElement('span', {
+      key: name + sz,
+      dangerouslySetInnerHTML: {__html: `<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${svg}</svg>`},
+      style: {display:'inline-flex', alignItems:'center', lineHeight:1, flexShrink:0},
+    })
+  }
+
+  fmt(n) { return '$ ' + Number(n).toLocaleString('es-AR') }
+
+  setTheme(dark) {
+    const r = document.documentElement
+    const v = dark
+      ? {'--bg':'#0F0F0F','--sb':'#141414','--sf':'#1A1A1A','--tx':'#F0F0F0','--t2':'#9CA3AF','--bd':'#2D2D2D','--ps':'rgba(58,191,191,0.12)','--ra':'rgba(255,255,255,0.04)'}
+      : {'--bg':'#FFFFFF','--sb':'#F7F7F7','--sf':'#F7F7F7','--tx':'#1A1A1A','--t2':'#6B7280','--bd':'#E5E7EB','--ps':'#E8F9F9','--ra':'#F7F7F7'}
+    Object.entries(v).forEach(([k, val]) => r.style.setProperty(k, val))
+  }
+
+  componentDidMount() { this.setTheme(this.state.darkMode) }
+  componentDidUpdate(pp, ps) {
+    if (ps.darkMode !== this.state.darkMode) this.setTheme(this.state.darkMode)
+    if (this.state.toast && !this._tt) {
+      this._tt = setTimeout(() => { this.setState({toast: null}); this._tt = null }, 3000)
+    }
+  }
+
+  toast(msg, type = 'success') {
+    if (this._tt) { clearTimeout(this._tt); this._tt = null }
+    this.setState({toast: msg, toastType: type})
+  }
+
+  nav(screen) { this.setState({screen, walletMenuOpen: null}) }
+
+  openModal(type, data = null) {
+    this.setState({modal: type, modalData: data, txStep: 1, txType: null, wType: 'Efectivo', tAttachment: false, walletMenuOpen: null})
+  }
+  closeModal() { this.setState({modal: null, modalData: null}) }
+
+  openDrawer(tx) { this.setState({drawerOpen: true, drawerTx: tx}) }
+  closeDrawer() { this.setState({drawerOpen: false, drawerTx: null, historyOpen: false}) }
+
+  get filteredTxns() {
+    const s = this.state
+    return this.txData.filter(t => {
+      if (s.filterType !== 'all' && t.type !== s.filterType) return false
+      if (s.filterWallet !== 'all' && t.wallet !== s.filterWallet) return false
+      return true
+    })
+  }
+
+  get totalBal() { return this.walletData.reduce((a, w) => a + w.balance, 0) }
+
+  walletIco(type, sz = 20) {
+    return this.ic(type === 'Banco' ? 'landmark' : type === 'Virtual' ? 'cc' : 'coins', sz)
+  }
+
+  renderVals() {
+    const s = this.state
+    const ic = (n, sz = 18) => this.ic(n, sz)
+
+    const isLogin    = s.screen === 'login'
+    const isRegister = s.screen === 'register'
+    const isApp      = !isLogin && !isRegister
+    const isDash     = s.screen === 'dashboard'
+    const isWal      = s.screen === 'wallets'
+    const isTxn      = s.screen === 'transactions'
+    const isSet      = s.screen === 'settings'
+
+    const hasModal   = !!s.modal
+    const mWallet    = s.modal === 'wallet'
+    const mTxn       = s.modal === 'txn'
+    const mConfirm   = s.modal === 'confirm'
+    const mInvite    = s.modal === 'invite'
+    const txS1       = s.txStep === 1
+    const txS2       = s.txStep === 2
+    const txGasto    = s.txType === 'gasto'
+    const txIngreso  = s.txType === 'ingreso'
+    const txTransfer = s.txType === 'transferencia'
+    const txGastoOrIngreso = txGasto || txIngreso
+
+    const isReadOnly = s.delegationRole === 'asesor' && s.delegationActive
+
+    // Nav colours
+    const nc = (screen) => ({
+      bg: s.screen === screen ? 'var(--ps)' : 'transparent',
+      c:  s.screen === screen ? '#3ABFBF' : 'var(--tx)',
+      ic: s.screen === screen ? '#3ABFBF' : 'var(--t2)',
+    })
+    const nd = nc('dashboard'), nw = nc('wallets'), nt = nc('transactions'), ns = nc('settings')
+
+    // Processed wallets
+    const walletCards = this.walletData.map(w => ({
+      ...w,
+      balFmt: this.fmt(w.balance),
+      ico: this.walletIco(w.type),
+      menuOpen: s.walletMenuOpen === w.id,
+      toggleMenu: (e) => { e.stopPropagation(); this.setState(ps => ({walletMenuOpen: ps.walletMenuOpen === w.id ? null : w.id})) },
+      doEdit:   () => this.openModal('wallet', w),
+      doDelete: () => this.setState({modal:'confirm', modalData:{label:'billetera', name:w.name}, walletMenuOpen:null}),
+    }))
+
+    const dashWallets = this.walletData.map(w => ({
+      ...w,
+      balFmt: this.fmt(w.balance),
+      ico: this.walletIco(w.type, 18),
+    }))
+
+    const recentTxns = this.txData.slice(0, 5).map(t => ({
+      ...t,
+      amtFmt: this.fmt(t.amount),
+      amtColor: t.type === 'ingreso' ? '#22C55E' : t.type === 'gasto' ? '#EF4444' : '#6B7280',
+      amtPrefix: t.type === 'gasto' ? '−' : t.type === 'ingreso' ? '+' : '',
+      ico: ic(t.icon, 16),
+      open: () => this.openDrawer(t),
+    }))
+
+    const filteredTxns = this.filteredTxns
+    const allTxns = filteredTxns.map((t, i) => ({
+      ...t,
+      amtFmt: this.fmt(t.amount),
+      amtColor: t.type === 'ingreso' ? '#22C55E' : t.type === 'gasto' ? '#EF4444' : '#6B7280',
+      amtPrefix: t.type === 'gasto' ? '−' : t.type === 'ingreso' ? '+' : '',
+      typeLabel: t.type === 'gasto' ? 'Gasto' : t.type === 'ingreso' ? 'Ingreso' : 'Transferencia',
+      typeColor: t.type === 'gasto' ? '#EF4444' : t.type === 'ingreso' ? '#22C55E' : '#6B7280',
+      ico: ic(t.icon, 15),
+      rowBg: i % 2 === 0 ? 'transparent' : 'var(--ra)',
+      open:     () => this.openDrawer(t),
+      doEdit:   (e) => { e.stopPropagation(); this.openModal('txn', t) },
+      doDelete: (e) => { e.stopPropagation(); this.setState({modal:'confirm', modalData:{label:'transacción', name:t.desc}}) },
+    }))
+
+    const myManagers = this.delegData.managers.map(d => ({
+      ...d,
+      initial: d.name.charAt(0),
+      roleColor: d.role === 'SUPERVISOR' ? '#3ABFBF' : '#6B7280',
+      doRevoke: () => this.setState({modal:'confirm', modalData:{label:'delegación', name:d.name}}),
+    }))
+
+    const iManage = this.delegData.iManage.map(d => ({
+      ...d,
+      initial: d.name.charAt(0),
+      roleColor: d.role === 'SUPERVISOR' ? '#3ABFBF' : '#6B7280',
+      doView: () => {
+        this.setState({delegationActive: true, delegationName: d.name, delegationRole: 'supervisor'})
+        this.nav('dashboard')
+        this.toast(`Viendo cuenta de ${d.name}`)
+      },
+    }))
+
+    // Drive elements (computed React nodes to avoid double sc-if)
+    const driveStatusEl = s.driveConnected
+      ? React.createElement('span', {style:{fontSize:12,background:'#DCFCE7',color:'#22C55E',borderRadius:20,padding:'3px 10px',fontWeight:500}}, 'Conectado')
+      : React.createElement('span', {style:{fontSize:12,background:'var(--sf)',color:'var(--t2)',borderRadius:20,padding:'3px 10px',fontWeight:500}}, 'Sin conectar')
+
+    const driveBtnEl = s.driveConnected
+      ? React.createElement('button', {
+          onClick: () => { this.setState({driveConnected:false}); this.toast('Google Drive desconectado') },
+          style:{fontSize:12,color:'#EF4444',fontWeight:500,padding:'7px 13px',border:'1px solid #EF4444',borderRadius:8,cursor:'pointer',background:'transparent'},
+        }, 'Desconectar')
+      : React.createElement('button', {
+          onClick: () => this.toast('Redirigiendo a Google — GET /api/auth/google/drive'),
+          style:{fontSize:12,color:'#fff',fontWeight:500,padding:'7px 13px',background:'#3ABFBF',borderRadius:8,border:'none',cursor:'pointer'},
+        }, 'Conectar')
+
+    // Drawer data
+    const dt = s.drawerTx || {}
+
+    const md = s.modalData || {}
+
+    return {
+      isLogin, isRegister, isApp, isDash, isWal, isTxn, isSet,
+      hasModal, mWallet, mTxn, mConfirm, mInvite,
+      txS1, txS2, txGasto, txIngreso, txTransfer, txGastoOrIngreso,
+      txStep: s.txStep,
+      txStepLabel: txS1 ? 'elegí el tipo' : 'completar datos',
+      txSubmitLabel: txTransfer ? 'Transferir' : 'Registrar',
+      hasDrawer: s.drawerOpen,
+      hasToast: !!s.toast,
+      toastMsg: s.toast || '',
+      toastBg:  s.toastType === 'success' ? '#1A1A1A' : '#FEF2F2',
+      toastC:   s.toastType === 'success' ? '#F0F0F0' : '#EF4444',
+      toastIcon: ic(s.toastType === 'success' ? 'check' : 'x', 15),
+      darkMode: s.darkMode,
+      darkBtnBg:  s.darkMode ? '#3ABFBF' : 'var(--bd)',
+      darkKnobLeft: s.darkMode ? '22px' : '2px',
+      darkIcon: ic(s.darkMode ? 'moon' : 'sun', 15),
+
+      // Data
+      walletCards, dashWallets, recentTxns, allTxns, myManagers, iManage,
+      txnCount: filteredTxns.length,
+      walletFilterOpts: [{value:'all',label:'Todas'}, ...this.walletData.map(w => ({value:w.name,label:w.name}))],
+      walletNames: this.walletData.map(w => ({name:w.name})),
+      categories: this.categories,
+      driveStatusEl, driveBtnEl,
+
+      totalBal: this.fmt(this.totalBal),
+      monthIncome: this.fmt(780000),
+      monthExpense: this.fmt(320000),
+
+      delegation: s.delegationActive,
+      delegName: s.delegationName,
+      delegRole: s.delegationRole,
+      isReadOnly,
+      txnBtnOpacity: isReadOnly ? '0.5' : '1',
+
+      showPwd: s.showPwd,
+      pwdType: s.showPwd ? 'text' : 'password',
+      eyeIcon: ic(s.showPwd ? 'eye-off' : 'eye', 15),
+      filterWallet: s.filterWallet,
+      filterType: s.filterType,
+      historyOpen: s.historyOpen,
+      driveConnected: s.driveConnected,
+
+      // Wallet type modal
+      wType: s.wType,
+      wTypeBgE: s.wType === 'Efectivo' ? 'var(--ps)' : 'var(--bg)',
+      wTypeCE:  s.wType === 'Efectivo' ? '#3ABFBF' : 'var(--t2)',
+      wTypeBgB: s.wType === 'Banco'    ? 'var(--ps)' : 'var(--bg)',
+      wTypeCB:  s.wType === 'Banco'    ? '#3ABFBF' : 'var(--t2)',
+      wTypeBgV: s.wType === 'Virtual'  ? 'var(--ps)' : 'var(--bg)',
+      wTypeCV:  s.wType === 'Virtual'  ? '#3ABFBF' : 'var(--t2)',
+
+      // Attachment
+      tAttachment: s.tAttachment,
+      attachBorder: s.tAttachment ? '#3ABFBF' : 'var(--bd)',
+      attachBg:     s.tAttachment ? 'var(--ps)' : 'var(--bg)',
+      attachIconColor:  s.tAttachment ? '#3ABFBF' : 'var(--t2)',
+      attachTitleColor: s.tAttachment ? '#3ABFBF' : 'var(--tx)',
+      attachMsg:    s.tAttachment ? 'IMG_20240521_1045.jpg adjunto' : 'Hacé clic para adjuntar',
+
+      // Modal data
+      modalLabel: md.label || '',
+      modalName:  md.name  || '',
+
+      // Drawer
+      drawerDesc:      dt.desc   || '',
+      drawerWallet:    dt.wallet || '',
+      drawerCat:       dt.cat    || '',
+      drawerDate:      dt.date   || '',
+      drawerTime:      dt.time   || '',
+      drawerAmt:       dt.amount ? this.fmt(dt.amount) : '',
+      drawerAmtColor:  dt.type === 'ingreso' ? '#22C55E' : '#EF4444',
+      drawerPrefix:    dt.type === 'gasto' ? '−' : dt.type === 'ingreso' ? '+' : '',
+      drawerIco:       ic(dt.icon || 'cart', 26),
+      drawerHasReceipt: !!dt.receipt,
+
+      // Nav colours
+      navDashBg: nd.bg, navDashC: nd.c, navDashIC: nd.ic,
+      navWalBg:  nw.bg, navWalC:  nw.c, navWalIC:  nw.ic,
+      navTxBg:   nt.bg, navTxC:   nt.c, navTxIC:   nt.ic,
+      navSetBg:  ns.bg, navSetC:  ns.c, navSetIC:  ns.ic,
+
+      // Icons
+      iHome: ic('home'), iWal: ic('wallet'), iArr: ic('arrows'), iSettings: ic('settings'),
+      iBell: ic('bell', 20), iPlus: ic('plus'), iX: ic('x', 18),
+      iMoreV: ic('morev', 15), iEdit: ic('edit', 14), iTrash: ic('trash', 14),
+      iLogout: ic('logout', 14), iChevD: ic('chevd', 13), iChevR: ic('chevr', 13),
+      iMail: ic('mail', 15), iLock: ic('lock', 15),
+      iEye: ic('eye', 15), iEyeOff: ic('eye-off', 15),
+      iTag: ic('tag', 14), iCal: ic('calendar', 14),
+      iClip: ic('clip', 14), iFileTxt: ic('filetxt', 14),
+      iExtLink: ic('extlink', 13), iClock: ic('clock', 14),
+      iArrUp: ic('arrup', 14), iArrDown: ic('arrdown', 14),
+      iDrive: ic('drive', 19), iFilter: ic('filter', 14),
+      iSend: ic('send', 14), iUserSm: ic('user', 14),
+
+      // Handlers
+      goLogin:    () => this.setState({screen: 'login'}),
+      goRegister: () => this.setState({screen: 'register'}),
+      goDash: () => this.nav('dashboard'),
+      goWal:  () => this.nav('wallets'),
+      goTxn:  () => this.nav('transactions'),
+      goSet:  () => this.nav('settings'),
+
+      togglePwd:  () => this.setState(ps => ({showPwd: !ps.showPwd})),
+      toggleDark: () => this.setState(ps => ({darkMode: !ps.darkMode})),
+      closeWalletMenu: () => this.setState({walletMenuOpen: null}),
+
+      doLogin:       () => { this.nav('dashboard'); this.toast('Sesión iniciada  ·  POST /api/auth/login') },
+      doRegister:    () => { this.nav('dashboard'); this.toast('Cuenta creada  ·  POST /api/auth/register') },
+      doGoogleLogin: () => { this.nav('dashboard'); this.toast('Google auth  ·  POST /api/auth/google') },
+      doLogout:      () => { this.nav('login'); this.toast('Sesión cerrada  ·  POST /api/auth/logout') },
+
+      openNewWallet: () => this.openModal('wallet'),
+      openNewTxn:    () => { if (!isReadOnly) this.openModal('txn') },
+      closeModal:    () => this.closeModal(),
+
+      selectGasto:    () => this.setState({txType: 'gasto',         txStep: 2}),
+      selectIngreso:  () => this.setState({txType: 'ingreso',       txStep: 2}),
+      selectTransfer: () => this.setState({txType: 'transferencia', txStep: 2}),
+      backTxStep:     () => this.setState({txStep: 1, txType: null}),
+
+      setWTypeEfectivo: () => this.setState({wType: 'Efectivo'}),
+      setWTypeBanco:    () => this.setState({wType: 'Banco'}),
+      setWTypeVirtual:  () => this.setState({wType: 'Virtual'}),
+
+      saveWallet: () => { this.closeModal(); this.toast('Billetera guardada  ·  POST /api/wallets') },
+      saveTxn:    () => { this.closeModal(); this.toast('Movimiento registrado  ·  POST /api/transactions') },
+      doConfirmDelete: () => { const n = (s.modalData || {}).name; this.closeModal(); this.toast(`${n || 'Elemento'} eliminado`) },
+      saveInvite: () => { this.closeModal(); this.toast('Invitación enviada  ·  POST /api/delegations') },
+      openInvite: () => this.openModal('invite'),
+
+      closeDrawer:     () => this.closeDrawer(),
+      toggleHistory:   () => this.setState(ps => ({historyOpen: !ps.historyOpen})),
+      toggleAttachment:() => this.setState(ps => ({tAttachment: !ps.tAttachment})),
+
+      setFilterWallet: (e) => this.setState({filterWallet: e.target.value}),
+      setFilterType:   (e) => this.setState({filterType:   e.target.value}),
+
+      returnToMyAcc: () => {
+        this.setState({delegationActive: false})
+        this.nav('dashboard')
+        this.toast('Volviste a tu cuenta')
+      },
+    }
+  }
+}
+</script>
+</body>
+</html>

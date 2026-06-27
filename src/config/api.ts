@@ -1,0 +1,60 @@
+import axios, { AxiosError } from 'axios'
+import { env } from './env'
+import { useAuthStore } from '@/store/useAuthStore'
+import { useOwnerStore } from '@/store/useOwnerStore'
+
+/** Error normalizado que consume la UI. */
+export interface ApiError {
+  status: number
+  message: string
+  /** true para endpoints stub (501): mostrar "Próximamente" en vez de error rojo. */
+  notImplemented: boolean
+}
+
+export const api = axios.create({
+  baseURL: env.apiBaseUrl,
+  headers: { 'Content-Type': 'application/json' },
+})
+
+// ─── Request: inyecta auth + contexto de owner ──────────────────────────────
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token
+  if (token) config.headers.set('Authorization', `Bearer ${token}`)
+
+  const ownerId = useOwnerStore.getState().activeOwnerId
+  if (ownerId) config.headers.set('X-Owner-Id', ownerId)
+
+  return config
+})
+
+// ─── Response: normaliza errores del contrato { error: "..." } ──────────────
+api.interceptors.response.use(
+  (res) => res,
+  (error: AxiosError<{ error?: string }>) => {
+    const status = error.response?.status ?? 0
+    const message =
+      error.response?.data?.error ??
+      (status === 0 ? 'No se pudo conectar con el servidor' : 'Ocurrió un error inesperado')
+
+    // 401: sesión inválida/expirada/revocada -> limpiar y mandar a login.
+    if (status === 401) {
+      useAuthStore.getState().clear()
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.assign('/login')
+      }
+    }
+
+    const apiError: ApiError = { status, message, notImplemented: status === 501 }
+    return Promise.reject(apiError)
+  },
+)
+
+/** Type guard para usar en catch / onError de mutaciones. */
+export function isApiError(e: unknown): e is ApiError {
+  return typeof e === 'object' && e !== null && 'status' in e && 'message' in e
+}
+
+/** Mensaje seguro para toasts, sea cual sea el error. */
+export function errorMessage(e: unknown): string {
+  return isApiError(e) ? e.message : 'Ocurrió un error inesperado'
+}
