@@ -38,6 +38,8 @@ export interface CreateDebtInput {
   categoryId?: string | null
   installmentsTotal?: number | null
   dueDate?: string | null
+  /** Billetera desde la que se descuenta cada cuota. Requerido si hay installmentsTotal. */
+  walletId?: string | null
   notes?: string | null
 }
 

@@ -6,7 +6,15 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { errorMessage } from '@/config/api'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { ResponsiveModal } from '@/components/elements/ResponsiveModal'
+import { useWallets } from '@/features/wallets'
 import { useCreateDebt } from '../api/useDebts'
 import type { DebtDirection } from '../types/debt'
 
@@ -18,13 +26,17 @@ interface DebtFormModalProps {
 /** Alta de deuda/préstamo. Local a la pantalla Plan (no es modal global). */
 export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
   const create = useCreateDebt()
+  const { data: wallets } = useWallets()
 
   const [direction, setDirection] = useState<DebtDirection>('I_OWE')
   const [counterparty, setCounterparty] = useState('')
   const [principal, setPrincipal] = useState('')
   const [installments, setInstallments] = useState('')
+  const [walletId, setWalletId] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [notes, setNotes] = useState('')
+
+  const hasInstallments = Number(installments) > 0
 
   useEffect(() => {
     if (!open) return
@@ -32,6 +44,7 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
     setCounterparty('')
     setPrincipal('')
     setInstallments('')
+    setWalletId('')
     setDueDate('')
     setNotes('')
   }, [open])
@@ -41,13 +54,14 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
     if (!counterparty.trim()) return toast.error('Ingresá la contraparte (banco, persona…)')
     const amount = Number(principal)
     if (!amount || amount <= 0) return toast.error('Ingresá un monto válido')
+    if (hasInstallments && !walletId) return toast.error('Elegí la billetera de las cuotas')
 
     create.mutate(
       {
         direction,
         counterparty: counterparty.trim(),
         principal: amount,
-        ...(Number(installments) > 0 ? { installmentsTotal: Number(installments) } : {}),
+        ...(hasInstallments ? { installmentsTotal: Number(installments), walletId } : {}),
         ...(dueDate ? { dueDate: new Date(dueDate).toISOString() } : {}),
         ...(notes.trim() ? { notes: notes.trim() } : {}),
       },
@@ -140,6 +154,27 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
             <Input id="d-due" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </div>
         </div>
+
+        {hasInstallments && (
+          <div className="space-y-1.5">
+            <Label htmlFor="d-wallet">
+              Billetera de pago{' '}
+              <span className="font-normal text-muted-foreground">(de acá sale cada cuota)</span>
+            </Label>
+            <Select value={walletId} onValueChange={setWalletId}>
+              <SelectTrigger id="d-wallet" className="w-full">
+                <SelectValue placeholder="Elegí una billetera" />
+              </SelectTrigger>
+              <SelectContent>
+                {wallets?.map((w) => (
+                  <SelectItem key={w.id} value={w.id}>
+                    {w.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="space-y-1.5">
           <Label htmlFor="d-notes">

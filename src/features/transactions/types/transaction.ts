@@ -9,6 +9,8 @@ export interface Transaction {
   description: string | null
   date: string // ISO 8601
   movementType: MovementType
+  /** Presente si la transacción provino de un pago de deuda (cuota). */
+  debtId?: string | null
   createdAt: string
   updatedAt: string
 }
