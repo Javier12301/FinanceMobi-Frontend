@@ -1,6 +1,6 @@
+import React from 'react'
 import { Link } from '@tanstack/react-router'
 import { LogOut, User } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useOwnerStore } from '@/store/useOwnerStore'
 import { useLogout } from '@/features/auth'
@@ -15,9 +15,9 @@ export function Sidebar() {
   const logout = useLogout()
 
   return (
-    <nav className="flex h-dvh w-60 shrink-0 flex-col border-r bg-sidebar">
+    <nav className="flex h-dvh w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 border-b px-4 py-4">
+      <div className="flex items-center gap-2.5 border-b border-sidebar-border px-4 py-4">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-[13px] font-bold text-primary-foreground">
           FV
         </div>
@@ -48,12 +48,25 @@ export function Sidebar() {
           <Link
             key={item.to}
             to={item.to}
-            className="mb-0.5 flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-[13px] font-medium text-foreground transition-colors hover:bg-accent/60"
-            activeProps={{ className: 'bg-primary-soft text-primary hover:bg-primary-soft' }}
+            className={[
+              // Layout & tipografía
+              'mb-0.5 flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-[13px] font-medium',
+              // Transición suave
+              'transition-colors duration-150',
+              // Estado NORMAL: colores del sidebar
+              'text-sidebar-foreground',
+              // Estado HOVER: fondo y texto del hover
+              'hover:bg-sidebar-hover hover:text-sidebar-hover-foreground',
+              // Estado ACTIVO: sobrescribe via data-attribute (mayor especificidad)
+              'data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground',
+              // HOVER sobre ACTIVO: mantiene los colores activos
+              'data-[active=true]:hover:bg-sidebar-accent data-[active=true]:hover:text-sidebar-accent-foreground',
+            ].join(' ')}
+            activeProps={{ 'data-active': 'true' } as React.AnchorHTMLAttributes<HTMLAnchorElement>}
           >
-            {({ isActive }) => (
+            {({ isActive: _isActive }) => (
               <>
-                <item.icon size={18} className={cn(isActive ? 'text-primary' : 'text-muted-foreground')} />
+                <item.icon size={18} />
                 {item.label}
               </>
             )}
@@ -62,7 +75,7 @@ export function Sidebar() {
       </div>
 
       {/* Usuario + logout */}
-      <div className="border-t p-3.5">
+      <div className="border-t border-sidebar-border p-3.5">
         <div className="mb-2.5 flex items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[13px] font-semibold text-primary">
             {((user?.name ?? user?.email)?.[0] ?? 'U').toUpperCase()}

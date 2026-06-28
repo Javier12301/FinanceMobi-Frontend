@@ -18,6 +18,47 @@ export interface DonutSlice {
   color: string
 }
 
+// ── Tooltip semántico ──────────────────────────────────────────────────────
+// Recharts inyecta estilos inline en su tooltip por defecto (fondo blanco,
+// borde gris hardcodeado). Para evitarlo, le pasamos un componente `content`
+// propio que usa clases de Tailwind mapeadas a los tokens del design system.
+interface TooltipPayloadEntry {
+  name: string
+  value: number
+  color?: string
+}
+
+interface ChartTooltipProps {
+  active?: boolean
+  payload?: TooltipPayloadEntry[]
+  label?: string
+}
+
+function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
+      {label && (
+        <p className="mb-1.5 text-xs font-medium text-muted-foreground">{label}</p>
+      )}
+      <div className="flex flex-col gap-1">
+        {payload.map((entry) => (
+          <div key={entry.name} className="flex items-center gap-2 text-sm text-card-foreground">
+            {entry.color && (
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: entry.color }}
+              />
+            )}
+            <span className="text-muted-foreground">{entry.name}:</span>
+            <span className="font-semibold">{formatCurrency(Number(entry.value))}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /** Donut de gasto por categoría. */
 export function CategoryDonut({ data }: { data: DonutSlice[] }) {
   if (data.length === 0) return null
@@ -29,7 +70,7 @@ export function CategoryDonut({ data }: { data: DonutSlice[] }) {
             <Cell key={d.name} fill={d.color} stroke="none" />
           ))}
         </Pie>
-        <Tooltip formatter={(v) => formatCurrency(Number(v))} />
+        <Tooltip content={<ChartTooltip />} />
       </PieChart>
     </ResponsiveContainer>
   )
@@ -47,10 +88,17 @@ export function MonthlyBars({ data }: { data: MonthBar[] }) {
   return (
     <ResponsiveContainer width="100%" height={200}>
       <BarChart data={data}>
-        <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-        <Tooltip formatter={(v) => formatCurrency(Number(v))} cursor={{ fill: 'transparent' }} />
-        <Bar dataKey="income" fill="var(--color-success, #10B981)" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="expense" fill="var(--color-destructive, #EF4444)" radius={[4, 4, 0, 0]} />
+        {/* fill apunta a la variable CSS para que los labels lean bien en ambos modos */}
+        <XAxis
+          dataKey="month"
+          tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+          axisLine={false}
+          tickLine={false}
+        />
+        <Tooltip content={<ChartTooltip />} cursor={{ fill: 'transparent' }} />
+        {/* name en español para que el tooltip lo muestre correctamente */}
+        <Bar dataKey="income" name="Ingresos" fill="var(--color-success)" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="expense" name="Gastos" fill="var(--color-destructive)" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   )

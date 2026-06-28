@@ -467,8 +467,10 @@ function CategoryGrid({
                 type="button"
                 onClick={() => setIcon(k)}
                 className={cn(
-                  'flex h-8 items-center justify-center rounded-lg border',
-                  icon === k ? 'border-primary bg-primary-soft text-primary' : 'text-muted-foreground',
+                  'flex h-8 items-center justify-center rounded-lg border transition-colors',
+                  icon === k
+                    ? 'border-primary bg-primary-soft text-primary'
+                    : 'border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground',
                 )}
               >
                 <Icon size={16} />
