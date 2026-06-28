@@ -20,6 +20,7 @@ está ordenado por **cuánto evita ese abandono**, no por dificultad.
 | 🔴 Alta | **Seed de onboarding** (billetera + categorías por defecto al registrarse) | No existe | Un dashboard vacío = abandono el día 1. El mayor ROI del doc. |
 | 🔴 Alta | **Push notifications** (registrar device token + recordatorios) | No existe | El olvido es la otra cara de la vagancia. Trae al usuario de vuelta. |
 | 🔴 Alta | **Stats de actividad / racha** (`GET /api/me/stats`) | No existe | Gamifica el hábito. Es la métrica-norte hecha visible. |
+| 🔴 Alta | **Deudas y préstamos** (`/api/debts`) | No existe | Pedido concreto: gestionar deudas/préstamos con cuotas y vencimientos. UI ya cableada (pantalla "Plan"). |
 | 🟡 Media | **Insights mensuales** (`GET /api/insights`) | No existe | "Gastaste 20% más que el mes pasado" da motivo para volver. |
 | 🟡 Media | **Filtros/búsqueda server-side** en transacciones | Cliente filtra todo hoy | Necesario cuando el historial crece (paginar). |
 | 🟢 Baja | **Plantillas de gasto frecuente** (`/api/templates`) | No existe | Acelera la carga; puede ser localStorage primero. |
@@ -115,6 +116,90 @@ quiere mantener. Es gamificación barata y honesta.
 
 ---
 
+## 3.5 🔴 Deudas y préstamos — `/api/debts`
+
+Pedido concreto del usuario: gestionar en un solo lugar las **deudas propias** (préstamo de banco,
+"le debo a alguien") y los **préstamos dados** ("le presté, me deben"), con cuotas y vencimientos.
+La UI ya está cableada: **pantalla "Plan"** (`/plan`) que agrupa ingresos fijos + gastos fijos + deudas,
+y un modal de alta de deuda. Hoy degrada a vacío (404/501) hasta que exista el endpoint.
+
+> **Decisión de producto ya tomada:** la plata de terceros (ej. la mamá del usuario) **NO** va acá como
+> categoría: va como **cuenta separada vía delegación** (el usuario la gestiona como SUPERVISOR). Este
+> módulo es de las deudas/préstamos del **owner activo**. Por eso usa `X-Owner-Id` como el resto.
+
+**Headers:** `Authorization` + `X-Owner-Id`.
+
+### Modelo `Debt`
+```typescript
+{
+  id: string
+  ownerId: string
+  direction: "I_OWE" | "OWED_TO_ME"   // debo / me deben
+  counterparty: string                 // "Banco Macro", "Juan"
+  categoryId: string | null            // opcional, para agrupar ("Préstamo banco")
+  principal: string                    // decimal-string — monto original
+  remaining: string                    // decimal-string — saldo pendiente (baja con cada pago)
+  recurringRuleId: string | null       // regla que dispara las cuotas (si tiene plan de cuotas)
+  installmentsTotal: number | null     // N cuotas; null = pago único
+  installmentsPaid: number | null
+  dueDate: string | null               // ISO — próxima cuota / pago único
+  status: "ACTIVE" | "PAID"
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+}
+```
+
+### Endpoints
+
+| Método | Ruta | Uso en la UI |
+|--------|------|--------------|
+| `GET` | `/api/debts` | Listas "Debo" / "Me deben" en la pantalla Plan |
+| `POST` | `/api/debts` | Modal "Nueva deuda o préstamo" |
+| `PUT` | `/api/debts/:id` | Editar contraparte / saldo / marcar saldada |
+| `DELETE` | `/api/debts/:id` | Borrar |
+| `POST` | `/api/debts/:id/pay` | Registrar pago/cobro (cableado; UI de pago en fast-follow) |
+
+**POST body** (lo que envía el front):
+```json
+{
+  "direction": "I_OWE",
+  "counterparty": "Banco Macro",
+  "principal": 120000,
+  "categoryId": null,
+  "installmentsTotal": 12,
+  "dueDate": "2026-07-05T00:00:00.000Z",
+  "notes": "Préstamo personal a 12 cuotas"
+}
+```
+- `installmentsTotal` y `dueDate` opcionales (pago único = sin cuotas).
+- El backend setea `remaining = principal` al crear y `status = "ACTIVE"`.
+- `201` con el `Debt` creado.
+
+**PUT body** (todos opcionales): `{ counterparty?, remaining?, status?, notes? }`.
+
+**`POST /:id/pay`** body: `{ walletId, amount }`. Materializa una `Transaction` desde `walletId`
+(EXPENSE si `I_OWE`, INCOME si `OWED_TO_ME`) por el **mismo path ACID** que un alta manual, baja
+`remaining`, incrementa `installmentsPaid` y avanza `dueDate` si hay cuotas. Si `remaining` llega a 0 →
+`status = "PAID"`.
+
+### Relación con recurrentes (importante, evita duplicar)
+Una deuda con cuotas **es** una `RecurringRule` + saldo. Recomendado: al crear un `Debt` con
+`installmentsTotal`, el backend crea (o vincula) una `RecurringRule` EXPENSE/INCOME y guarda su id en
+`recurringRuleId`. Así las cuotas aparecen en la tarjeta "Por confirmar" del dashboard (que ya existe)
+y se confirman con el mismo flujo. **No construir un scheduler paralelo.**
+
+### Sueldo / ingresos fijos (sin entidad nueva)
+El usuario también pidió gestionar **uno o más sueldos** (sueldo fijo + promedio del negocio).
+Esto **no necesita modelo nuevo**: son `RecurringRule` de tipo `INCOME`. Distinción que ya hace la UI:
+- **fijo** = `autoPost: true` (sueldo de farmacéutica, monto constante).
+- **promedio/variable** = `autoPost: false` (negocio): cada mes el usuario confirma el monto real.
+
+La pantalla Plan ya lee las reglas INCOME y las muestra agrupadas como "Ingresos fijos" con su etiqueta
+fijo/promedio. Solo necesita que `/api/recurring-rules` (ya en v3) funcione.
+
+---
+
 ## 4. 🟡 Insights mensuales — `GET /api/insights`
 
 "¿En qué se me va?" con **comparación temporal** (lo que el dashboard de v3 todavía no responde).
@@ -202,6 +287,7 @@ y decidir si los totales del dashboard se convierten (requiere tasas) o se agrup
 | Seed onboarding | **Cero front** — solo deja de aparecer el estado vacío. |
 | Device tokens / push | nuevo `src/features/notifications/`, sección en Ajustes, plugin Capacitor Push |
 | `me/stats` (racha) | `src/features/auth/` o nuevo `src/features/stats/`, chip en `DashboardPage` |
+| **`/api/debts`** | **ya cableado**: `src/features/debts/`, pantalla `src/pages/PlanPage.tsx`, ruta `/plan` |
 | `insights` | `src/features/summary/` (ya existe), tarjeta "Tu mes" |
 | Filtros server-side | `src/features/transactions/api/useTransactions.ts`, `TransactionsPage` |
 | Templates | nuevo `src/features/templates/`, accesos rápidos en dashboard |

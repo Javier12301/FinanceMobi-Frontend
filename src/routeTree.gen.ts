@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppWalletsRouteImport } from './routes/_app/wallets'
 import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppPlanRouteImport } from './routes/_app/plan'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppCategoriesRouteImport } from './routes/_app/categories'
 import { Route as AuthDriveCallbackRouteImport } from './routes/auth.drive.callback'
@@ -54,6 +55,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPlanRoute = AppPlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/categories': typeof AppCategoriesRoute
   '/dashboard': typeof AppDashboardRoute
+  '/plan': typeof AppPlanRoute
   '/settings': typeof AppSettingsRoute
   '/transactions': typeof AppTransactionsRoute
   '/wallets': typeof AppWalletsRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/categories': typeof AppCategoriesRoute
   '/dashboard': typeof AppDashboardRoute
+  '/plan': typeof AppPlanRoute
   '/settings': typeof AppSettingsRoute
   '/transactions': typeof AppTransactionsRoute
   '/wallets': typeof AppWalletsRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/_app/categories': typeof AppCategoriesRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/plan': typeof AppPlanRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/transactions': typeof AppTransactionsRoute
   '/_app/wallets': typeof AppWalletsRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/categories'
     | '/dashboard'
+    | '/plan'
     | '/settings'
     | '/transactions'
     | '/wallets'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/categories'
     | '/dashboard'
+    | '/plan'
     | '/settings'
     | '/transactions'
     | '/wallets'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/_app/categories'
     | '/_app/dashboard'
+    | '/_app/plan'
     | '/_app/settings'
     | '/_app/transactions'
     | '/_app/wallets'
@@ -201,6 +213,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/plan': {
+      id: '/_app/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof AppPlanRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -228,6 +247,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppCategoriesRoute: typeof AppCategoriesRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppPlanRoute: typeof AppPlanRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
   AppWalletsRoute: typeof AppWalletsRoute
@@ -236,6 +256,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCategoriesRoute: AppCategoriesRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppPlanRoute: AppPlanRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTransactionsRoute: AppTransactionsRoute,
   AppWalletsRoute: AppWalletsRoute,
