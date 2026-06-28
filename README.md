@@ -1,11 +1,11 @@
-# FinanceVier — Frontend
+# FinanceMobile — Frontend
 
 SPA mobile-first de gestión de finanzas personales. **Vite + React + TypeScript**, con TanStack Router/Query, shadcn/ui + Tailwind v4 y Zustand.
 
 ## Requisitos
 
 - Node.js 20+
-- Backend de FinanceVier corriendo (ver `docs/contrato-frontend-v1.md`). En dev: `http://localhost:3000`.
+- Backend de FinanceMobile corriendo (ver `docs/contrato-frontend-v1.md`). En dev: `http://localhost:3000`.
 
 ## Puesta en marcha
 

@@ -1,4 +1,4 @@
-# Contratos que el frontend espera para v4 — FinanceVier
+# Contratos que el frontend espera para v4 — FinanceMobile
 
 > Generado el 2026-06-27, tras cerrar v3 (categorías icon/color, presupuestos, recurrentes, Drive OAuth).
 > Mismo criterio que v3: lo que se liste acá se cablea en el front con **degradación elegante**
@@ -103,7 +103,7 @@ quiere mantener. Es gamificación barata y honesta.
   longestStreak: number
   daysActiveThisMonth: number
   totalMovements: number
-  firstMovementAt: string | null   // ISO — para "Llevás X días con FinanceVier"
+  firstMovementAt: string | null   // ISO — para "Llevás X días con FinanceMobile"
 }
 ```
 

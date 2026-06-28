@@ -1,4 +1,4 @@
-# Contrato de API Frontend — FinanceVier v2
+# Contrato de API Frontend — FinanceMobile v2
 
 > Generado el 2026-06-27. Cubre todos los endpoints implementados hasta CP4 del change `unblock-frontend-ui-v2`.
 > Supercede al contrato v1. Cambios respecto a v1: registro por email, endpoint de perfil, gestión de delegaciones, eliminación de transacciones (ya no es stub 501).
@@ -558,7 +558,7 @@ Elimina una transacción, revierte el balance y limpia los adjuntos de Drive. Re
 
 #### `POST /api/drive/connect`
 
-Conecta Google Drive cifrando el refresh token en la DB. Crea la carpeta raíz `FinanceVier` en Drive si no existe.
+Conecta Google Drive cifrando el refresh token en la DB. Crea la carpeta raíz `FinanceMobile` en Drive si no existe.
 
 **Body:**
 ```json
@@ -746,7 +746,7 @@ Todos los campos de fecha: `"2026-06-27T10:00:00.000Z"`.
 Al crear una delegación (`POST /api/delegations`), el acceso es efectivo de inmediato. No hay flujo de invitación/aceptación.
 
 ### Google Drive
-Los archivos se suben a la carpeta `FinanceVier` del Drive del **owner** (no del delegado). Un `SUPERVISOR` puede subir adjuntos a transacciones del owner usando el Drive del owner.
+Los archivos se suben a la carpeta `FinanceMobile` del Drive del **owner** (no del delegado). Un `SUPERVISOR` puede subir adjuntos a transacciones del owner usando el Drive del owner.
 
 ### Rate limiting en auth
 `/api/auth/login`, `/api/auth/google` y `/api/auth/register` comparten el mismo rate limit por IP. Ante `429`, mostrar mensaje de espera y no reintentar automáticamente.

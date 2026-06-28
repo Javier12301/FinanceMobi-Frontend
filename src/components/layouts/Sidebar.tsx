@@ -21,7 +21,7 @@ export function Sidebar() {
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-[13px] font-bold text-primary-foreground">
           FV
         </div>
-        <span className="text-[15px] font-semibold tracking-tight text-primary">FinanceVier</span>
+        <span className="text-[15px] font-semibold tracking-tight text-primary">FinanceMobile</span>
       </div>
 
       {/* Badge de delegación */}

@@ -1,4 +1,4 @@
-# Contrato de API Frontend — FinanceVier v1
+# Contrato de API Frontend — FinanceMobile v1
 
 > Generado el 2026-06-27. Cubre los checkpoints CP1–CP7 (implementados y aprobados).
 > CP8 (hardening de deploy) está pendiente; la URL de producción se completará al terminar.
@@ -511,7 +511,7 @@ La política de eliminación de transacciones está pendiente de resolución.
 
 #### `POST /api/drive/connect`
 
-Conecta Google Drive del usuario cifrando y persistiendo el refresh token. Crea la carpeta raíz `FinanceVier` en Drive si no existe.
+Conecta Google Drive del usuario cifrando y persistiendo el refresh token. Crea la carpeta raíz `FinanceMobile` en Drive si no existe.
 
 > El refresh token se obtiene del flujo OAuth2 de Google con scope `drive.file`.
 

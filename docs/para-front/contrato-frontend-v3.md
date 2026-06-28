@@ -1,4 +1,4 @@
-# Contrato Frontend v3 — FinanceVier Backend
+# Contrato Frontend v3 — FinanceMobile Backend
 
 > Generado: 2026-06-27  
 > Change: `unblock-frontend-ui-v3` (CP1–CP4)  

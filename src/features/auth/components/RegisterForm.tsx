@@ -31,7 +31,7 @@ export function RegisterForm() {
   return (
     <div className="w-full max-w-[420px] rounded-xl border bg-card p-8 shadow-sm sm:p-10">
       <div className="mb-7 text-center">
-        <div className="text-[28px] font-semibold tracking-tight text-primary">FinanceVier</div>
+        <div className="text-[28px] font-semibold tracking-tight text-primary">FinanceMobile</div>
         <div className="mt-1 text-sm text-muted-foreground">Creá tu cuenta</div>
       </div>
 

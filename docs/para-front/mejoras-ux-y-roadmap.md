@@ -1,4 +1,4 @@
-# Mejoras UX y roadmap — FinanceVier
+# Mejoras UX y roadmap — FinanceMobile
 
 > Documento de producto/UX. No es código. Pensado sobre la UI actual ya implementada
 > (login, dashboard, billeteras, movimientos, ajustes/delegación).

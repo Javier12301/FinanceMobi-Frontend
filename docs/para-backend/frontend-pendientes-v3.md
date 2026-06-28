@@ -1,4 +1,5 @@
-# Contratos que el frontend espera para v3 — FinanceVier
+
+# Contratos que el frontend espera para v3 — FinanceMobile
 
 > Generado el 2026-06-27 tras incorporar la API v2 y dejar **cableadas** las features de v3.
 > Lista lo que la UI **ya consume** y el contrato v2 **no expone todavía**.
@@ -13,13 +14,13 @@
 
 ## 0. Resumen ejecutivo
 
-| Prioridad | Tema | Estado backend | Acción para backend |
-|-----------|------|----------------|---------------------|
-| 🔴 Alta | **Movimientos recurrentes** (`/api/recurring-rules`) | No existe | Implementar 6 endpoints + modelo `RecurringRule` |
-| 🟡 Media | **Categorías con ícono/color** (`icon`, `color`) | No existe | Agregar 2 campos opcionales a `Category` |
-| 🟡 Media | **Editar/borrar categoría** (`PUT`/`DELETE /api/categories/:id`) | No existe | Implementar (la pantalla de Categorías ya los llama) |
-| 🟡 Media | **Presupuestos** (`/api/budgets`) | No existe | Implementar CRUD + modelo `Budget` |
-| 🟢 Baja | **Flujo OAuth de Drive** (obtener `refreshToken`) | `POST /connect` existe, falta el flujo cliente | Definir code-vs-refreshToken / URL de consentimiento |
+| Prioridad | Tema                                                                        | Estado backend                                   | Acción para backend                                  |
+| --------- | --------------------------------------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------- |
+| 🔴 Alta   | **Movimientos recurrentes** (`/api/recurring-rules`)                | No existe                                        | Implementar 6 endpoints + modelo`RecurringRule`     |
+| 🟡 Media  | **Categorías con ícono/color** (`icon`, `color`)                | No existe                                        | Agregar 2 campos opcionales a`Category`             |
+| 🟡 Media  | **Editar/borrar categoría** (`PUT`/`DELETE /api/categories/:id`) | No existe                                        | Implementar (la pantalla de Categorías ya los llama) |
+| 🟡 Media  | **Presupuestos** (`/api/budgets`)                                   | No existe                                        | Implementar CRUD + modelo`Budget`                   |
+| 🟢 Baja   | **Flujo OAuth de Drive** (obtener `refreshToken`)                   | `POST /connect` existe, falta el flujo cliente | Definir code-vs-refreshToken / URL de consentimiento  |
 
 Convención de degradación: los `GET` de features dormidas (recurrentes, presupuestos) atrapan `404`/`501`
 vía `isNotAvailable(e)` en `src/config/api.ts` y devuelven `[]`. Las mutaciones muestran "próximamente".
@@ -35,6 +36,7 @@ servicios, cuotas. La UI ya tiene: switch **"Repetir cada mes"** en el form de m
 **Headers:** `Authorization` + `X-Owner-Id` (como el resto de recursos del owner).
 
 ### Modelo `RecurringRule`
+
 ```typescript
 {
   id: string                 // UUID
@@ -59,16 +61,17 @@ servicios, cuotas. La UI ya tiene: switch **"Repetir cada mes"** en el form de m
 
 ### Endpoints
 
-| Método | Ruta | Uso en la UI |
-|--------|------|--------------|
-| `GET` | `/api/recurring-rules` | Lista en Ajustes → "Movimientos recurrentes" |
-| `POST` | `/api/recurring-rules` | Switch "Repetir cada mes" al cargar un movimiento |
-| `PUT` | `/api/recurring-rules/:id` | Pausar/reanudar (`active`), editar monto/día |
-| `DELETE` | `/api/recurring-rules/:id` | Borrar regla |
-| `GET` | `/api/recurring-rules/pending` | Tarjeta "Por confirmar" del dashboard |
-| `POST` | `/api/recurring-rules/:id/confirm` | Botón "Confirmar" → crea la `Transaction` |
+| Método    | Ruta                                 | Uso en la UI                                      |
+| ---------- | ------------------------------------ | ------------------------------------------------- |
+| `GET`    | `/api/recurring-rules`             | Lista en Ajustes → "Movimientos recurrentes"     |
+| `POST`   | `/api/recurring-rules`             | Switch "Repetir cada mes" al cargar un movimiento |
+| `PUT`    | `/api/recurring-rules/:id`         | Pausar/reanudar (`active`), editar monto/día   |
+| `DELETE` | `/api/recurring-rules/:id`         | Borrar regla                                      |
+| `GET`    | `/api/recurring-rules/pending`     | Tarjeta "Por confirmar" del dashboard             |
+| `POST`   | `/api/recurring-rules/:id/confirm` | Botón "Confirmar" → crea la`Transaction`      |
 
 **POST body** (lo que envía el front):
+
 ```json
 {
   "walletId": "uuid",
@@ -82,6 +85,7 @@ servicios, cuotas. La UI ya tiene: switch **"Repetir cada mes"** en el form de m
   "startDate": "2026-06-27T10:00:00.000Z"
 }
 ```
+
 > `frequency` se omite → asumir `MONTHLY`. Respuesta `201` con el `RecurringRule` creado.
 
 **PUT body** (todos opcionales): `{ amount?, dayOfMonth?, autoPost?, active?, endDate? }`.
@@ -94,6 +98,7 @@ roadmap §5) y avanza `nextRunDate`. Respuesta `204` o el `Transaction` creado (
 invalida `transactions` y `wallets`).
 
 ### Disparo (sugerencia del roadmap §2.3)
+
 - **MVP lazy:** materializar on-read al cargar dashboard/login: `autoPost=true` → inserta; resto → "pendiente".
 - **Upgrade:** cron diario sobre `nextRunDate <= CURRENT_DATE`.
 
@@ -105,6 +110,7 @@ invalida `transactions` y `wallets`).
 ## 2. 🟡 Categorías — ícono/color y edición
 
 ### 2.1 Campos `icon` y `color` en `Category`
+
 Hoy las categorías son texto plano. La UI ya muestra una **grilla de íconos** y colores; mientras el
 backend no los exponga, los **deriva del nombre** de forma determinista (fallback en
 `src/features/categories/categoryMeta.ts`). Para persistir la elección del usuario:
@@ -121,11 +127,12 @@ color: string | null   // hex, p. ej. "#3ABFBF"
 `POST /api/categories` y el (nuevo) `PUT` aceptan `icon`/`color` opcionales. Si llegan `null`, la UI usa el fallback.
 
 ### 2.2 Editar / borrar categoría
+
 La pantalla **Ajustes → Categorías** (nueva en el front) ya llama:
 
-| Método | Ruta | Notas |
-|--------|------|-------|
-| `PUT` | `/api/categories/:id` | Body opcional: `{ name?, icon?, color? }`. No cambia `movementType`. |
+| Método    | Ruta                    | Notas                                                                      |
+| ---------- | ----------------------- | -------------------------------------------------------------------------- |
+| `PUT`    | `/api/categories/:id` | Body opcional:`{ name?, icon?, color? }`. No cambia `movementType`.    |
 | `DELETE` | `/api/categories/:id` | Definir política si la categoría tiene transacciones (`409` sugerido). |
 
 > Mientras no existan, la UI captura `404`/`501` y muestra "Editar/Eliminar categorías estará disponible próximamente".
@@ -140,6 +147,7 @@ dibuja barras de progreso en el dashboard (rojo si se pasa). Oculto si no hay pr
 **Headers:** `Authorization` + `X-Owner-Id`.
 
 ### Modelo `Budget`
+
 ```typescript
 {
   id: string
@@ -154,12 +162,12 @@ dibuja barras de progreso en el dashboard (rojo si se pasa). Oculto si no hay pr
 
 ### Endpoints
 
-| Método | Ruta | Uso |
-|--------|------|-----|
-| `GET` | `/api/budgets` | Barras de progreso en dashboard |
-| `POST` | `/api/budgets` | `{ categoryId, month: "2026-06", limit: 50000 }` → `201` |
-| `PUT` | `/api/budgets/:id` | `{ limit }` |
-| `DELETE` | `/api/budgets/:id` | `204` |
+| Método    | Ruta                 | Uso                                                           |
+| ---------- | -------------------- | ------------------------------------------------------------- |
+| `GET`    | `/api/budgets`     | Barras de progreso en dashboard                               |
+| `POST`   | `/api/budgets`     | `{ categoryId, month: "2026-06", limit: 50000 }` → `201` |
+| `PUT`    | `/api/budgets/:id` | `{ limit }`                                                 |
+| `DELETE` | `/api/budgets/:id` | `204`                                                       |
 
 > El front filtra por mes actual en cliente; alcanza con que `GET` devuelva los presupuestos del owner.
 
@@ -182,11 +190,11 @@ Idealmente el backend expone también la URL de consentimiento. Punto de integra
 
 ## 5. Dónde tocar en el frontend si cambian los contratos
 
-| Si cambia… | Ajustar en |
-|------------|------------|
-| Forma de `RecurringRule` o sus endpoints | `src/features/recurring/` (`types/`, `api/useRecurring.ts`) |
-| Campos `icon`/`color` o catálogo de íconos | `src/features/categories/` (`types/category.ts`, `categoryMeta.ts`) |
-| `PUT`/`DELETE` categorías | `src/features/categories/api/useCategories.ts` |
-| Forma de `Budget` o sus endpoints | `src/features/budgets/` |
-| Flujo de Drive (code vs refreshToken) | `src/features/drive/` |
-| Criterio de "endpoint dormido" | `isNotAvailable()` en `src/config/api.ts` |
+| Si cambia…                                     | Ajustar en                                                                |
+| ----------------------------------------------- | ------------------------------------------------------------------------- |
+| Forma de`RecurringRule` o sus endpoints       | `src/features/recurring/` (`types/`, `api/useRecurring.ts`)         |
+| Campos`icon`/`color` o catálogo de íconos | `src/features/categories/` (`types/category.ts`, `categoryMeta.ts`) |
+| `PUT`/`DELETE` categorías                  | `src/features/categories/api/useCategories.ts`                          |
+| Forma de`Budget` o sus endpoints              | `src/features/budgets/`                                                 |
+| Flujo de Drive (code vs refreshToken)           | `src/features/drive/`                                                   |
+| Criterio de "endpoint dormido"                  | `isNotAvailable()` en `src/config/api.ts`                             |

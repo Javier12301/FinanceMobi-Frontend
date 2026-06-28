@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  Tokens del prototipo Claude Design (FinanceVier.dc.html -> setTheme()).
+  Tokens del prototipo Claude Design (FinanceMobile.dc.html -> setTheme()).
   Mapeados a los tokens semánticos de shadcn/ui.
   Primario de marca: teal #3ABFBF.
 */
@@ -42,7 +42,7 @@
   --input: #e3e6ea;
   --ring: #0f766e;
 
-  /* Tokens propios de FinanceVier */
+  /* Tokens propios de FinanceMobile */
   --success: #15803d; /* ponytail: green-700; el #22c55e daba 2.28:1 sobre blanco */
   --success-foreground: #ffffff;
   --primary-soft: #e8f9f9; /* --ps: fondo de chips/badges teal */

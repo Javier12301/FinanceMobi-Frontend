@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Qué es esto
 
-Frontend de **FinanceVier**: SPA mobile-first de finanzas personales (billeteras, movimientos, delegación de cuentas, adjuntos en Google Drive del propio usuario). Vite + React 19 + TypeScript. El backend es un proyecto aparte; este repo solo consume su API REST (ver `docs/contrato-frontend-v1.md`).
+Frontend de **FinanceMobile**: SPA mobile-first de finanzas personales (billeteras, movimientos, delegación de cuentas, adjuntos en Google Drive del propio usuario). Vite + React 19 + TypeScript. El backend es un proyecto aparte; este repo solo consume su API REST (ver `docs/contrato-frontend-v1.md`).
 
 Responder al usuario en **español**.
 

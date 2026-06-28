@@ -1,4 +1,4 @@
-# Endpoints pendientes y contratos no cumplidos — UI FinanceVier
+# Endpoints pendientes y contratos no cumplidos — UI FinanceMobile
 
 > Generado por el frontend tras el scaffold del proyecto (Vite + React + TS).
 > Lista lo que la UI actual **ya consume** pero el **contrato v1 del backend no expone todavía**,
