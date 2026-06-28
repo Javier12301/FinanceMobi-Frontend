@@ -20,7 +20,10 @@
   --popover: #ffffff;
   --popover-foreground: #1a1a1a;
 
-  --primary: #3abfbf;
+  /* ponytail: teal profundo (teal-700) para modo claro — el #3abfbf neón daba 2.24:1
+     con texto blanco (falla WCAG AA). #0f766e pasa 5.47:1 como texto y como fondo.
+     El modo oscuro mantiene el teal brillante (ahí ya contrasta). */
+  --primary: #0f766e;
   --primary-foreground: #ffffff;
 
   --secondary: #eceef2; /* --sf */
@@ -30,17 +33,17 @@
   --muted-foreground: #6b7280; /* --t2 */
 
   --accent: #e8f9f9; /* --ps (teal suave) */
-  --accent-foreground: #3abfbf;
+  --accent-foreground: #0f766e;
 
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
   --border: #e3e6ea; /* --bd */
   --input: #e3e6ea;
-  --ring: #3abfbf;
+  --ring: #0f766e;
 
   /* Tokens propios de FinanceVier */
-  --success: #22c55e;
+  --success: #15803d; /* ponytail: green-700; el #22c55e daba 2.28:1 sobre blanco */
   --success-foreground: #ffffff;
   --primary-soft: #e8f9f9; /* --ps: fondo de chips/badges teal */
   --surface: #eceef2; /* --sf: barras de filtro, thead, iconos */
@@ -48,12 +51,12 @@
 
   --sidebar: #eceef2; /* --sb */
   --sidebar-foreground: #1a1a1a;
-  --sidebar-primary: #3abfbf;
+  --sidebar-primary: #0f766e;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #e8f9f9;
-  --sidebar-accent-foreground: #3abfbf;
+  --sidebar-accent-foreground: #0f766e;
   --sidebar-border: #e5e7eb;
-  --sidebar-ring: #3abfbf;
+  --sidebar-ring: #0f766e;
 }
 
 .dark {
