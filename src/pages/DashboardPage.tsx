@@ -14,6 +14,7 @@ import { useWallets, useWalletTypes, useWalletModal, walletTypeMeta } from '@/fe
 import {
   useTransactions,
   useTransactionDrawer,
+  useTransactionModal,
   TransactionRow,
   type Transaction,
 } from '@/features/transactions'
@@ -46,8 +47,10 @@ export function DashboardPage() {
   const { data: wallets, isLoading: walletsLoading } = useWallets()
   const { data: types } = useWalletTypes()
   const { data: txns, isLoading: txnsLoading } = useTransactions()
+  const isReadOnly = useOwnerStore((s) => s.isReadOnly)
   const openWalletModal = useWalletModal((s) => s.open)
   const openDrawer = useTransactionDrawer((s) => s.open)
+  const openTransactionModal = useTransactionModal((s) => s.open)
 
   const totalBalance = wallets?.reduce((sum, w) => sum + parseDecimal(w.currentBalance), 0) ?? 0
   const { income, expense } = monthTotals(txns ?? [])
@@ -76,7 +79,15 @@ export function DashboardPage() {
             </div>
           )}
         </div>
-        <Bell size={20} className="text-muted-foreground" />
+        <div className="flex items-center gap-2">
+          {!isReadOnly && (
+            <Button size="sm" className="gap-1.5" onClick={() => openTransactionModal()}>
+              <Plus size={15} />
+              <span className="hidden sm:inline">Registrar</span>
+            </Button>
+          )}
+          <Bell size={20} className="text-muted-foreground" />
+        </div>
       </div>
 
       {/* Recurrentes vencidos por confirmar (oculto si no hay / endpoint dormido) */}

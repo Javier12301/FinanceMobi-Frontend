@@ -3,25 +3,20 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { IconBadge } from '@/components/elements/IconBadge'
 import { useAuthStore } from '@/store/useAuthStore'
-import { useConnectDrive } from '../api/useConnectDrive'
+import { errorMessage } from '@/config/api'
+import { useGetDriveAuthUrl } from '../api/useConnectDrive'
 
-/**
- * Vinculación de Google Drive en Ajustes.
- * El estado "conectado" viene de GET /me (driveConnected). v2.
- * ponytail: la obtención del refreshToken (consentimiento OAuth offline) se integra
- * con GIS/Capacitor; acá queda el enganche y el POST /api/drive/connect ya cableado.
- * Pendiente documentado en docs/para-backend/frontend-pendientes-v3.md.
- */
 export function DriveSection() {
-  const connect = useConnectDrive()
   const connected = useAuthStore((s) => s.user?.driveConnected ?? false)
+  const getAuthUrl = useGetDriveAuthUrl()
 
-  const onConnect = () => {
-    // TODO(integración): abrir consentimiento OAuth (drive.file, offline) y obtener el refreshToken.
-    toast.info('Iniciá el consentimiento de Google para vincular Drive (pendiente de integración OAuth).')
-    // Una vez obtenido el refreshToken:
-    // connect.mutate(refreshToken, { onSuccess: () => toast.success('Google Drive conectado') })
-    void connect
+  const onConnect = async () => {
+    try {
+      const { url } = await getAuthUrl.mutateAsync()
+      window.location.href = url
+    } catch (e) {
+      toast.error(errorMessage(e))
+    }
   }
 
   return (
@@ -47,8 +42,8 @@ export function DriveSection() {
               <span className="rounded-full bg-surface px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                 Sin conectar
               </span>
-              <Button size="sm" onClick={onConnect} disabled={connect.isPending}>
-                Conectar
+              <Button size="sm" onClick={onConnect} disabled={getAuthUrl.isPending}>
+                {getAuthUrl.isPending ? 'Redirigiendo…' : 'Conectar'}
               </Button>
             </>
           )}

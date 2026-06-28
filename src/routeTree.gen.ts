@@ -18,6 +18,7 @@ import { Route as AppTransactionsRouteImport } from './routes/_app/transactions'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppCategoriesRouteImport } from './routes/_app/categories'
+import { Route as AuthDriveCallbackRouteImport } from './routes/auth.drive.callback'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -63,6 +64,11 @@ const AppCategoriesRoute = AppCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AppRoute,
 } as any)
+const AuthDriveCallbackRoute = AuthDriveCallbackRouteImport.update({
+  id: '/auth/drive/callback',
+  path: '/auth/drive/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRoute
   '/transactions': typeof AppTransactionsRoute
   '/wallets': typeof AppWalletsRoute
+  '/auth/drive/callback': typeof AuthDriveCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/transactions': typeof AppTransactionsRoute
   '/wallets': typeof AppWalletsRoute
+  '/auth/drive/callback': typeof AuthDriveCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/_app/transactions': typeof AppTransactionsRoute
   '/_app/wallets': typeof AppWalletsRoute
+  '/auth/drive/callback': typeof AuthDriveCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/transactions'
     | '/wallets'
+    | '/auth/drive/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/transactions'
     | '/wallets'
+    | '/auth/drive/callback'
   id:
     | '__root__'
     | '/'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/transactions'
     | '/_app/wallets'
+    | '/auth/drive/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -135,6 +147,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  AuthDriveCallbackRoute: typeof AuthDriveCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -202,6 +215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCategoriesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/auth/drive/callback': {
+      id: '/auth/drive/callback'
+      path: '/auth/drive/callback'
+      fullPath: '/auth/drive/callback'
+      preLoaderRoute: typeof AuthDriveCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -228,6 +248,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  AuthDriveCallbackRoute: AuthDriveCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
