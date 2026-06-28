@@ -72,8 +72,8 @@ export function usePayDebt() {
   const queryClient = useQueryClient()
   const ownerId = useOwnerStore((s) => s.activeOwnerId)
   return useMutation({
-    mutationFn: async ({ id, walletId, amount }: { id: string; walletId: string; amount: number }) => {
-      await api.post(`/debts/${id}/pay`, { walletId, amount })
+    mutationFn: async ({ id, walletId, amount, date }: { id: string; walletId: string; amount: number; date?: string }) => {
+      await api.post(`/debts/${id}/pay`, { walletId, amount, date })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: debtsKey(ownerId) })

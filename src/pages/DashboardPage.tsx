@@ -19,6 +19,7 @@ import {
   type Transaction,
 } from '@/features/transactions'
 import { PendingRecurringCard } from '@/features/recurring'
+import { useStats } from '@/features/auth'
 
 // ponytail: lazy => recharts queda fuera del chunk crítico del dashboard.
 const SummarySection = lazy(() =>
@@ -44,6 +45,7 @@ export function DashboardPage() {
   const resetToSelf = useOwnerStore((s) => s.resetToSelf)
   const selfId = useOwnerStore((s) => s.selfId)
 
+  const { data: stats } = useStats()
   const { data: wallets, isLoading: walletsLoading } = useWallets()
   const { data: types } = useWalletTypes()
   const { data: txns, isLoading: txnsLoading } = useTransactions()
@@ -89,6 +91,20 @@ export function DashboardPage() {
           <Bell size={20} className="text-muted-foreground" />
         </div>
       </div>
+
+      {/* Racha de actividad */}
+      {stats && (stats.currentStreak > 0 ? (
+        <div className="mb-4 flex items-center gap-2">
+          <span className="rounded-full bg-primary-soft px-3 py-1 text-sm font-semibold text-primary">
+            🔥 {stats.currentStreak} {stats.currentStreak === 1 ? 'día' : 'días'} seguidos
+          </span>
+          {stats.longestStreak > stats.currentStreak && (
+            <span className="text-xs text-muted-foreground">Récord: {stats.longestStreak}</span>
+          )}
+        </div>
+      ) : stats.totalMovements === 0 ? (
+        <p className="mb-4 text-xs text-muted-foreground">Cargá un gasto para empezar tu racha 🔥</p>
+      ) : null)}
 
       {/* Recurrentes vencidos por confirmar (oculto si no hay / endpoint dormido) */}
       <PendingRecurringCard />

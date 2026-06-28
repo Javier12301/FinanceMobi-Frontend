@@ -1,8 +1,40 @@
 import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { parseDecimal } from '@/utils/formatCurrency'
 import { useCategories, categoryMeta } from '@/features/categories'
 import { useTransactions, type Transaction } from '@/features/transactions'
+import { useOwnerStore } from '@/store/useOwnerStore'
+import { api, isNotAvailable } from '@/config/api'
 import type { DonutSlice, MonthBar } from '@/components/elements/charts'
+
+export interface Insights {
+  month: string
+  income: { total: string; deltaPercent: number | null }
+  expenses: { total: string; deltaPercent: number | null }
+  topCategories: Array<{ categoryId: string; name: string; total: string; count: number }>
+  biggestExpense: { id: string; amount: string; description: string | null; date: string; categoryId: string } | null
+}
+
+// GET /api/insights?month=YYYY-MM — X-Owner-Id lo inyecta el interceptor.
+// ponytail: null si endpoint dormido; SummarySection sigue con cálculo cliente.
+export function useInsights(month?: string) {
+  const ownerId = useOwnerStore((s) => s.activeOwnerId)
+  const m = month ?? new Date().toISOString().slice(0, 7)
+  return useQuery({
+    queryKey: ['insights', ownerId, m],
+    enabled: !!ownerId,
+    retry: false,
+    queryFn: async () => {
+      try {
+        const { data } = await api.get<Insights>('/insights', { params: { month: m } })
+        return data
+      } catch (e) {
+        if (isNotAvailable(e)) return null
+        throw e
+      }
+    },
+  })
+}
 
 const MONTH_FMT = new Intl.DateTimeFormat('es-AR', { month: 'short' })
 

@@ -8,6 +8,7 @@ import { useLogout } from '@/features/auth'
 import { DriveSection } from '@/features/drive'
 import { DelegationsSection } from '@/features/delegations'
 import { RecurringSection } from '@/features/recurring'
+import { NotificationsSection } from '@/features/notifications'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <div className="mb-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{children}</div>
@@ -57,6 +58,7 @@ export function SettingsPage() {
         </section>
 
         <RecurringSection />
+        <NotificationsSection />
         <DriveSection />
         <DelegationsSection />
 

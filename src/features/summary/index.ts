@@ -1,2 +1,3 @@
 export { SummarySection } from './SummarySection'
-export { useSummary } from './useSummary'
+export { useSummary, useInsights } from './useSummary'
+export type { Insights } from './useSummary'

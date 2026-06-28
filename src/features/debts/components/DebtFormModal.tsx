@@ -47,9 +47,9 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
         direction,
         counterparty: counterparty.trim(),
         principal: amount,
-        installmentsTotal: Number(installments) || null,
-        dueDate: dueDate ? new Date(dueDate).toISOString() : null,
-        notes: notes.trim() || null,
+        ...(Number(installments) > 0 ? { installmentsTotal: Number(installments) } : {}),
+        ...(dueDate ? { dueDate: new Date(dueDate).toISOString() } : {}),
+        ...(notes.trim() ? { notes: notes.trim() } : {}),
       },
       {
         onSuccess: () => {

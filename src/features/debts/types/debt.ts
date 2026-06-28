@@ -22,7 +22,7 @@ export interface Debt {
   recurringRuleId: string | null
   /** Cantidad total de cuotas (para "Cuota N de M"); null si es pago único. */
   installmentsTotal: number | null
-  installmentsPaid: number | null
+  installmentsPaid: number
   /** Vencimiento, ISO; para pago único o próxima cuota. */
   dueDate: string | null
   status: DebtStatus
@@ -43,7 +43,8 @@ export interface CreateDebtInput {
 
 export interface UpdateDebtInput {
   counterparty?: string
-  remaining?: number
-  status?: DebtStatus
+  categoryId?: string | null
+  dueDate?: string | null
   notes?: string | null
+  status?: DebtStatus
 }

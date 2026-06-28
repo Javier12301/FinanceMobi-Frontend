@@ -1,12 +1,13 @@
 import { formatCurrency } from '@/utils/formatCurrency'
 import { CategoryDonut, MonthlyBars } from '@/components/elements/charts'
 import { useBudgetProgress } from '@/features/budgets'
-import { useSummary } from './useSummary'
+import { useSummary, useInsights } from './useSummary'
 
 /** Sección "¿En qué se me va?" del dashboard: donut por categoría + evolución mensual + presupuestos. */
 export function SummarySection() {
   const { byCategory, byMonth, hasData } = useSummary()
   const budgets = useBudgetProgress()
+  const { data: insights } = useInsights()
 
   if (!hasData) return null
 
@@ -34,6 +35,22 @@ export function SummarySection() {
       </Card>
 
       <Card title="Evolución mensual">
+        {(insights?.expenses?.deltaPercent != null || insights?.income?.deltaPercent != null) && (
+          <div className="mb-3 flex gap-3 text-xs">
+            {insights?.expenses?.deltaPercent != null && (
+              <span className={insights.expenses.deltaPercent > 0 ? 'text-destructive' : 'text-success'}>
+                Gastos {insights.expenses.deltaPercent > 0 ? '▲' : '▼'}{' '}
+                {Math.abs(insights.expenses.deltaPercent).toFixed(1)}% vs mes anterior
+              </span>
+            )}
+            {insights?.income?.deltaPercent != null && (
+              <span className={insights.income.deltaPercent >= 0 ? 'text-success' : 'text-destructive'}>
+                Ingresos {insights.income.deltaPercent >= 0 ? '▲' : '▼'}{' '}
+                {Math.abs(insights.income.deltaPercent).toFixed(1)}%
+              </span>
+            )}
+          </div>
+        )}
         <MonthlyBars data={byMonth} />
         {budgets.length > 0 && (
           <div className="mt-4 space-y-2.5">

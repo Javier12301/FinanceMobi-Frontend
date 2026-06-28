@@ -1,4 +1,6 @@
 export { useLogin } from './api/useLogin'
+export { useStats } from './api/useStats'
+export type { Stats } from './api/useStats'
 export { useMe } from './api/useMe'
 export { useRegister } from './api/useRegister'
 export { useGoogleLogin } from './api/useGoogleLogin'
