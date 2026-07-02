@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Building2, Check } from 'lucide-react'
+import { Check, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,7 @@ import { errorMessage, isNotAvailable } from '@/config/api'
 import { formatCurrency, parseDecimal } from '@/utils/formatCurrency'
 import { ResponsiveModal } from '@/components/elements/ResponsiveModal'
 import { useWallets } from '@/features/wallets'
+import { useTransactions } from '@/features/transactions'
 import { useDebtModal } from '../useDebtModal'
 import { useDebts, usePayDebt } from '../api/useDebts'
 import { deriveInstallments, installmentProgress, projectedInstallmentAmount, type Installment } from '../installments'
@@ -45,6 +46,17 @@ export function DebtDetailDrawer() {
 function DebtDetailContent({ debt, onClose }: { debt: Debt; onClose: () => void }) {
   const { data: wallets } = useWallets()
   const pay = usePayDebt()
+
+  // Pagos reales de esta deuda (una Transaction por cuota, con su monto realmente pagado).
+  const { data: payments } = useTransactions({ debtId: debt.id })
+  const paidAmounts = useMemo(() => {
+    const sorted = [...(payments ?? [])].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    )
+    return sorted.map((t) => parseDecimal(t.amount))
+  }, [payments])
+
+  const [trackOpen, setTrackOpen] = useState(false)
 
   const owed = debt.direction === 'OWED_TO_ME'
   const installments = useMemo(() => deriveInstallments(debt), [debt])
@@ -109,24 +121,59 @@ function DebtDetailContent({ debt, onClose }: { debt: Debt; onClose: () => void 
       }
     >
       <div className="flex flex-col gap-4 py-1">
-        {/* Resumen */}
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-            <Building2 size={20} />
+        {/* ── Pago arriba (acción principal, sin scrollear) ── */}
+        {isSettled ? (
+          <div className="rounded-xl bg-primary-soft px-4 py-3 text-center text-sm font-semibold text-primary">
+            {owed ? 'Préstamo cobrado por completo ✓' : 'Deuda saldada ✓'}
           </div>
-          <div className="grid flex-1 grid-cols-2 gap-x-3 gap-y-1">
-            <div>
-              <div className="text-lg font-bold leading-tight">{formatCurrency(debt.principal)}</div>
-              <div className="text-[11px] text-muted-foreground">Monto total</div>
-            </div>
-            {debt.installmentsTotal != null && (
-              <div>
-                <div className="text-lg font-bold leading-tight">{debt.installmentsTotal}</div>
-                <div className="text-[11px] text-muted-foreground">Cuotas</div>
+        ) : (
+          <div className="space-y-3 rounded-xl border border-border bg-card p-4">
+            {/* Monto a pagar (editable: permite recargos de mora/ajustes bancarios) */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium" htmlFor="pay-amount">
+                {owed ? 'Monto a cobrar' : 'Monto a pagar'}
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base font-semibold text-muted-foreground">$</span>
+                <Input
+                  id="pay-amount"
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  value={payInput}
+                  onChange={(e) => setPayInput(e.target.value)}
+                  className="h-12 pl-7 text-lg font-bold"
+                />
               </div>
-            )}
+              <p className="text-xs text-muted-foreground">
+                Cuota pactada {formatCurrency(projected)}.{' '}
+                {surcharge > 0
+                  ? `Incluye ${formatCurrency(surcharge)} de recargo (no baja el capital).`
+                  : 'Podés ajustarlo si el banco te cobró un recargo.'}
+              </p>
+            </div>
+
+            {/* Billetera del pago */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium" htmlFor="pay-wallet">
+                {owed ? 'Billetera donde entra el cobro' : 'Billetera de la que sale el pago'}
+              </label>
+              <Select value={walletId} onValueChange={setWalletId}>
+                <SelectTrigger id="pay-wallet" className="w-full">
+                  <SelectValue placeholder="Elegí una billetera" />
+                </SelectTrigger>
+                <SelectContent>
+                  {wallets?.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Métricas: capital vs recargos */}
         <div className="space-y-2 rounded-xl border border-border bg-card px-4 py-3 text-sm">
@@ -142,12 +189,16 @@ function DebtDetailContent({ debt, onClose }: { debt: Debt; onClose: () => void 
           </div>
         </div>
 
-        {/* Seguimiento de cuotas */}
+        {/* Seguimiento de cuotas (desplegable) */}
         {debt.installmentsTotal != null && (
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="mb-3 flex items-center gap-3">
+          <div className="rounded-xl border border-border bg-card">
+            <button
+              type="button"
+              onClick={() => setTrackOpen((v) => !v)}
+              className="flex w-full items-center gap-3 p-4 text-left"
+            >
               <ProgressRing value={progress} />
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold">
                   {debt.installmentsPaid} de {debt.installmentsTotal} {owed ? 'cobradas' : 'pagadas'}
                 </div>
@@ -155,66 +206,24 @@ function DebtDetailContent({ debt, onClose }: { debt: Debt; onClose: () => void 
                   {isSettled
                     ? 'Deuda saldada'
                     : nextInstallment
-                      ? `Próximo paso: cuota ${nextInstallment.n}`
+                      ? `Próxima: cuota ${nextInstallment.n}`
                       : '—'}
                 </div>
               </div>
-            </div>
-
-            <ul className="divide-y divide-border">
-              {installments.map((c) => (
-                <InstallmentRow key={c.n} installment={c} owed={owed} />
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Monto a pagar (editable: permite recargos de mora/ajustes bancarios) */}
-        {!isSettled && (
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium" htmlFor="pay-amount">
-              {owed ? 'Monto a cobrar' : 'Monto a pagar'}
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
-              <Input
-                id="pay-amount"
-                type="number"
-                inputMode="decimal"
-                min="0"
-                step="0.01"
-                value={payInput}
-                onChange={(e) => setPayInput(e.target.value)}
-                className="pl-7 text-base font-semibold"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Cuota pactada {formatCurrency(projected)}.{' '}
-              {surcharge > 0
-                ? `Incluye ${formatCurrency(surcharge)} de recargo (no baja el capital).`
-                : 'Podés ajustarlo si el banco te cobró un recargo.'}
-            </p>
-          </div>
-        )}
-
-        {/* Billetera del pago */}
-        {!isSettled && (
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium" htmlFor="pay-wallet">
-              {owed ? 'Billetera donde entra el cobro' : 'Billetera de la que sale el pago'}
-            </label>
-            <Select value={walletId} onValueChange={setWalletId}>
-              <SelectTrigger id="pay-wallet" className="w-full">
-                <SelectValue placeholder="Elegí una billetera" />
-              </SelectTrigger>
-              <SelectContent>
-                {wallets?.map((w) => (
-                  <SelectItem key={w.id} value={w.id}>
-                    {w.name}
-                  </SelectItem>
+              <ChevronDown size={18} className={cn('shrink-0 text-muted-foreground transition-transform', trackOpen && 'rotate-180')} />
+            </button>
+            {trackOpen && (
+              <ul className="divide-y divide-border border-t border-border px-4 pb-1">
+                {installments.map((c) => (
+                  <InstallmentRow
+                    key={c.n}
+                    installment={c}
+                    owed={owed}
+                    realAmount={c.status === 'paid' ? paidAmounts[c.n - 1] : undefined}
+                  />
                 ))}
-              </SelectContent>
-            </Select>
+              </ul>
+            )}
           </div>
         )}
 
@@ -235,9 +244,11 @@ function MetricLine({ label, value, valueClass, muted }: { label: string; value:
   )
 }
 
-function InstallmentRow({ installment: c, owed }: { installment: Installment; owed: boolean }) {
+function InstallmentRow({ installment: c, owed, realAmount }: { installment: Installment; owed: boolean; realAmount?: number }) {
   const paid = c.status === 'paid'
   const isNext = c.status === 'next'
+  // Para cuotas pagadas mostramos lo realmente pagado; si difiere del pactado, tachamos el pactado.
+  const differs = paid && realAmount != null && Math.abs(realAmount - c.amount) >= 1
   return (
     <li className="flex items-center gap-3 py-2.5">
       <span
@@ -252,12 +263,22 @@ function InstallmentRow({ installment: c, owed }: { installment: Installment; ow
         <div className="text-sm font-medium">Cuota {c.n}</div>
         <div className="text-xs text-muted-foreground">
           {paid ? (owed ? 'cobrada' : 'pagada') : isNext ? 'próxima' : 'pendiente'}
-          {c.dueDate && ` · vence ${new Date(c.dueDate).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}`}
+          {differs && <span className="text-destructive"> · con recargo</span>}
+          {!paid && c.dueDate && ` · vence ${new Date(c.dueDate).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })}`}
         </div>
       </div>
-      <span className="shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">
-        {formatCurrency(c.amount)}
-      </span>
+      <div className="shrink-0 text-right">
+        {differs ? (
+          <>
+            <span className="mr-1.5 text-xs tabular-nums text-muted-foreground line-through">{formatCurrency(c.amount)}</span>
+            <span className="text-sm font-semibold tabular-nums text-foreground">{formatCurrency(realAmount!)}</span>
+          </>
+        ) : (
+          <span className="text-sm font-semibold tabular-nums text-muted-foreground">
+            {formatCurrency(paid && realAmount != null ? realAmount : c.amount)}
+          </span>
+        )}
+      </div>
     </li>
   )
 }

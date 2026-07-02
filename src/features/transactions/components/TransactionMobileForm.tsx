@@ -1,17 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Delete, X } from 'lucide-react'
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Check, Delete, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   Sheet,
   SheetContent,
@@ -72,7 +65,12 @@ function formatDateShort(dateInput: string): string {
 }
 
 function formatRepeatShort(repeat: boolean): string {
-  return repeat ? 'Mensual' : 'Una vez'
+  return repeat ? 'Cada mes' : 'Nunca'
+}
+
+function formatFullDate(dateInput: string): string {
+  const [y, m, d] = dateInput.split('-')
+  return `${d}/${m}/${y}`
 }
 
 // ── Numpad ────────────────────────────────────────────────────────────────────
@@ -533,58 +531,68 @@ function ContextSheet({
   autoPost: boolean
   setAutoPost: (v: boolean) => void
 }) {
-  const title = field === 'wallet'
-    ? (isTransfer ? 'Origen y destino' : 'Billetera')
-    : field === 'date' ? 'Fecha' : 'Repetir'
+  const meta = {
+    wallet: {
+      title: isTransfer ? 'Origen y destino' : 'Billetera',
+      subtitle: isTransfer ? 'Desde dónde sale y a dónde entra' : 'Desde qué billetera se registra',
+    },
+    date: { title: 'Fecha', subtitle: 'Cuándo ocurrió el movimiento' },
+    repeat: { title: 'Repetir', subtitle: 'Agendalo como movimiento fijo mensual' },
+  }[field ?? 'wallet']
+
+  const day = Number(date.slice(8, 10))
 
   return (
     <Sheet open={field !== null} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-2xl">
-        <SheetTitle className="mb-3">{title}</SheetTitle>
+      <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-5 pt-5">
+        <SheetTitle className="text-lg">{meta.title}</SheetTitle>
+        <p className="mb-4 mt-0.5 text-sm text-muted-foreground">{meta.subtitle}</p>
 
         {field === 'wallet' && (isTransfer ? (
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Desde (origen)</Label>
-              <WalletSelect wallets={wallets} value={walletId} onChange={setWalletId} />
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Desde (origen)</Label>
+              <WalletList wallets={wallets} value={walletId} onChange={setWalletId} exclude={destinationWalletId} />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Hacia (destino)</Label>
-              <WalletSelect wallets={wallets} value={destinationWalletId} onChange={setDestinationWalletId} />
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Hacia (destino)</Label>
+              <WalletList wallets={wallets} value={destinationWalletId} onChange={setDestinationWalletId} exclude={walletId} />
             </div>
           </div>
+        ) : isEdit ? (
+          <p className="text-sm text-muted-foreground">La billetera no se puede cambiar al editar un movimiento.</p>
         ) : (
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Billetera</Label>
-            <WalletSelect wallets={wallets} value={walletId} onChange={setWalletId} disabled={isEdit} />
-          </div>
+          <WalletList wallets={wallets} value={walletId} onChange={setWalletId} />
         ))}
 
         {field === 'date' && (
-          <div className="flex gap-1.5">
-            <DateChip label="Hoy" active={date === todayInput()} onClick={() => setDate(todayInput())} />
-            <DateChip label="Ayer" active={date === yesterdayInput()} onClick={() => setDate(yesterdayInput())} />
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 flex-1" />
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <OptionCard title="Hoy" desc={formatFullDate(todayInput())} active={date === todayInput()} onClick={() => setDate(todayInput())} />
+              <OptionCard title="Ayer" desc={formatFullDate(yesterdayInput())} active={date === yesterdayInput()} onClick={() => setDate(yesterdayInput())} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cs-date" className="text-xs font-medium text-muted-foreground">Otra fecha</Label>
+              <Input id="cs-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-11" />
+            </div>
           </div>
         )}
 
         {field === 'repeat' && (isEdit ? (
           <p className="text-sm text-muted-foreground">La repetición no se cambia al editar un movimiento.</p>
         ) : (
-          <div className="rounded-lg border border-border bg-background p-3">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="tm-repeat" className="text-sm font-medium">
-                Repetir cada mes
-                <span className="block text-xs font-normal text-muted-foreground mt-1">
-                  Día {Number(date.slice(8, 10))} de cada mes
-                </span>
-              </Label>
-              <Switch id="tm-repeat" checked={repeat} onCheckedChange={setRepeat} />
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <OptionCard title="Nunca" desc="Movimiento único" active={!repeat} onClick={() => setRepeat(false)} />
+              <OptionCard title="Cada mes" desc={`El día ${day}`} active={repeat} onClick={() => setRepeat(true)} />
             </div>
             {repeat && (
-              <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
-                <Label htmlFor="tm-auto" className="text-xs font-normal text-muted-foreground">
-                  Cargar automáticamente cada mes
+              <div className="flex items-center justify-between rounded-xl border border-border bg-background p-3">
+                <Label htmlFor="tm-auto" className="text-sm font-medium">
+                  Cargar automáticamente
+                  <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                    Se registra solo cada mes, sin confirmar
+                  </span>
                 </Label>
                 <Switch id="tm-auto" checked={autoPost} onCheckedChange={setAutoPost} />
               </div>
@@ -592,7 +600,7 @@ function ContextSheet({
           </div>
         ))}
 
-        <Button type="button" onClick={onClose} className="mt-4 h-11 w-full rounded-xl font-semibold">
+        <Button type="button" onClick={onClose} className="mt-5 h-11 w-full rounded-xl font-semibold">
           Listo
         </Button>
       </SheetContent>
@@ -600,44 +608,58 @@ function ContextSheet({
   )
 }
 
-function WalletSelect({
+/** Lista de billeteras seleccionable (más clara que un select nativo dentro de un sheet). */
+function WalletList({
   wallets,
   value,
   onChange,
-  disabled,
+  exclude,
 }: {
   wallets: { id: string; name: string }[] | undefined
   value: string
   onChange: (v: string) => void
-  disabled?: boolean
+  exclude?: string
 }) {
+  const options = wallets?.filter((w) => w.id !== exclude) ?? []
+  if (options.length === 0) {
+    return <p className="text-sm text-muted-foreground">No hay billeteras disponibles.</p>
+  }
   return (
-    <Select value={value} onValueChange={onChange} disabled={disabled}>
-      <SelectTrigger className="w-full">
-        <SelectValue placeholder="Elegí una billetera" />
-      </SelectTrigger>
-      <SelectContent>
-        {wallets?.map((w) => (
-          <SelectItem key={w.id} value={w.id}>
+    <div className="max-h-56 space-y-1.5 overflow-y-auto">
+      {options.map((w) => {
+        const active = w.id === value
+        return (
+          <button
+            key={w.id}
+            type="button"
+            onClick={() => onChange(w.id)}
+            className={cn(
+              'flex w-full items-center justify-between rounded-xl border px-3.5 py-3 text-left text-sm font-medium transition-colors',
+              active ? 'border-primary bg-primary-soft text-primary' : 'border-border hover:bg-muted',
+            )}
+          >
             {w.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+            {active && <Check size={16} />}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
-function DateChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+/** Card seleccionable (título + descripción) para opciones de fecha/repetición. */
+function OptionCard({ title, desc, active, onClick }: { title: string; desc: string; active: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-lg border px-3 text-sm font-medium',
-        active ? 'border-primary bg-primary-soft text-primary' : 'text-muted-foreground',
+        'rounded-xl border-2 p-3 text-left transition-colors',
+        active ? 'border-primary bg-primary-soft text-primary' : 'border-border text-foreground hover:bg-muted',
       )}
     >
-      {label}
+      <div className="text-sm font-semibold">{title}</div>
+      <div className={cn('mt-0.5 text-xs', active ? 'text-primary/80' : 'text-muted-foreground')}>{desc}</div>
     </button>
   )
 }

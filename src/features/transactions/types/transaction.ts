@@ -39,6 +39,7 @@ export interface UpdateTransactionInput {
 export interface TransactionFilters {
   walletId?: string
   categoryId?: string
+  debtId?: string
   dateFrom?: string
   dateTo?: string
 }

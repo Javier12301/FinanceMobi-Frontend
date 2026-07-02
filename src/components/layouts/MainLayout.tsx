@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { useMe } from '@/features/auth'
 import { TransactionFormModal, TransactionDetailDrawer } from '@/features/transactions'
-import { WalletFormModal } from '@/features/wallets'
+import { WalletFormModal, OnboardingModal } from '@/features/wallets'
 import { DebtFormModal, DebtDetailDrawer, useDebtModal } from '@/features/debts'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
@@ -30,6 +30,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
       <TransactionFormModal />
       <TransactionDetailDrawer />
       <WalletFormModal />
+      <OnboardingModal />
       <DebtFormModal open={debtCreateOpen} onClose={closeDebt} />
       <DebtDetailDrawer />
     </div>
