@@ -60,13 +60,13 @@ export function ResponsiveModal({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[92dvh] overflow-y-auto rounded-t-2xl">
-        <SheetHeader>
+      <SheetContent side="bottom" className="flex max-h-[92dvh] flex-col rounded-t-2xl">
+        <SheetHeader className="shrink-0 px-4 pb-2">
           <SheetTitle>{title}</SheetTitle>
           {description && <SheetDescription>{description}</SheetDescription>}
         </SheetHeader>
-        <div className="px-4">{children}</div>
-        {footer && <SheetFooter>{footer}</SheetFooter>}
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">{children}</div>
+        {footer && <SheetFooter className="shrink-0 border-t px-4 py-3">{footer}</SheetFooter>}
       </SheetContent>
     </Sheet>
   )

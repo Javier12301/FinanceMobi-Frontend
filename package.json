@@ -11,7 +11,11 @@
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@tanstack/query-sync-storage-persister": "^5.101.2",
     "@tanstack/react-query": "^5.66.0",
+    "@tanstack/react-query-persist-client": "^5.101.2",
     "@tanstack/react-router": "^1.95.0",
     "axios": "^1.7.9",
     "class-variance-authority": "^0.7.1",
@@ -28,6 +32,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.4.1",
     "@tailwindcss/vite": "^4.0.0",
     "@tanstack/react-query-devtools": "^5.66.0",
     "@tanstack/router-devtools": "^1.95.0",

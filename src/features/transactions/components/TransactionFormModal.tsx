@@ -29,6 +29,8 @@ import { dateInputToIso, isoToDateInput, dateToInput } from '@/utils/formatDate'
 import { useTransactionModal } from '../useTransactionModal'
 import { useCreateTransaction, useUpdateTransaction } from '../api/useTransactionMutations'
 import { getLastUsed, setLastUsed } from '../lastUsed'
+import { useIsDesktop } from '@/hooks/useMediaQuery'
+import { TransactionMobileForm } from './TransactionMobileForm'
 
 const TYPE_OPTIONS: { type: MovementType; label: string; icon: typeof ArrowUpRight; active: string }[] = [
   { type: 'EXPENSE', label: 'Gasto', icon: ArrowDownLeft, active: 'border-destructive bg-destructive/10 text-destructive' },
@@ -44,6 +46,15 @@ const yesterdayInput = () => {
 }
 
 export function TransactionFormModal() {
+  const isDesktop = useIsDesktop()
+
+  // En mobile usamos el formulario con numpad custom (sin teclado nativo)
+  if (!isDesktop) return <TransactionMobileForm />
+
+  return <TransactionFormDesktop />
+}
+
+function TransactionFormDesktop() {
   const { isOpen, editing, duplicateFrom, close } = useTransactionModal()
   const { data: wallets } = useWallets()
   const { data: categories } = useCategories()
@@ -189,6 +200,16 @@ export function TransactionFormModal() {
       onOpenChange={(o) => !o && close()}
       title={isEdit ? 'Editar movimiento' : 'Registrar movimiento'}
       className="sm:max-w-lg"
+      footer={
+        <div className="flex w-full items-center justify-end gap-2">
+          <Button variant="outline" onClick={close}>
+            Cancelar
+          </Button>
+          <Button type="submit" form="txn-form" disabled={pending}>
+            {pending ? 'Guardando…' : isTransfer ? 'Transferir' : 'Registrar'}
+          </Button>
+        </div>
+      }
     >
       <form id="txn-form" onSubmit={submit} className="flex flex-col gap-3 py-1">
         {/* Tipo (chips). En edición no se puede cambiar el tipo. */}
@@ -299,15 +320,6 @@ export function TransactionFormModal() {
           </p>
         )}
       </form>
-
-      <div className="flex items-center justify-end gap-2 pt-2">
-        <Button variant="outline" onClick={close}>
-          Cancelar
-        </Button>
-        <Button type="submit" form="txn-form" disabled={pending}>
-          {pending ? 'Guardando…' : isTransfer ? 'Transferir' : 'Registrar'}
-        </Button>
-      </div>
     </ResponsiveModal>
   )
 }
