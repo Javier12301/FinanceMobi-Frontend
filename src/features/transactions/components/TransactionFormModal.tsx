@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Check, Plus } from 'lucide-react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,11 +17,7 @@ import { errorMessage, isNotAvailable } from '@/config/api'
 import { ResponsiveModal } from '@/components/elements/ResponsiveModal'
 import { useWallets } from '@/features/wallets'
 import {
-  useCategories,
-  useCreateCategory,
-  categoryMeta,
-  CATEGORY_ICONS,
-  CATEGORY_COLORS,
+  CategoryPicker,
   type MovementType,
 } from '@/features/categories'
 import { useCreateRecurringRule } from '@/features/recurring'
@@ -55,9 +51,8 @@ export function TransactionFormModal() {
 }
 
 function TransactionFormDesktop() {
-  const { isOpen, editing, duplicateFrom, close } = useTransactionModal()
+  const { isOpen, editing, duplicateFrom, defaults, close } = useTransactionModal()
   const { data: wallets } = useWallets()
-  const { data: categories } = useCategories()
   const create = useCreateTransaction()
   const update = useUpdateTransaction()
   const createRule = useCreateRecurringRule()
@@ -87,8 +82,9 @@ function TransactionFormDesktop() {
       setDescription(source.description ?? '')
       setDate(editing ? isoToDateInput(source.date) : todayInput()) // duplicar => hoy
     } else {
-      const last = getLastUsed('EXPENSE')
-      setType('EXPENSE')
+      const dType = defaults?.movementType ?? 'EXPENSE'
+      const last = getLastUsed(dType)
+      setType(dType)
       setAmount('')
       setWalletId(last.walletId ?? '')
       setDestinationWalletId('')
@@ -96,9 +92,9 @@ function TransactionFormDesktop() {
       setDescription('')
       setDate(todayInput())
     }
-    setRepeat(false)
+    setRepeat(defaults?.repeat ?? false)
     setAutoPost(false)
-  }, [isOpen, editing, duplicateFrom])
+  }, [isOpen, editing, duplicateFrom, defaults])
 
   // Al cambiar de tipo en un alta limpia, aplica los defaults recordados de ese tipo.
   const onChangeType = (t: MovementType) => {
@@ -109,11 +105,6 @@ function TransactionFormDesktop() {
       setCategoryId(last.categoryId ?? '')
     }
   }
-
-  const filteredCategories = useMemo(
-    () => categories?.filter((c) => c.movementType === type) ?? [],
-    [categories, type],
-  )
 
   const pending = create.isPending || update.isPending
   const isTransfer = type === 'TRANSFER'
@@ -264,13 +255,7 @@ function TransactionFormDesktop() {
             </Field>
             <div className="space-y-1.5">
               <Label>Categoría</Label>
-              <CategoryGrid
-                categories={filteredCategories}
-                value={categoryId}
-                onChange={setCategoryId}
-                movementType={type}
-                onCreated={setCategoryId}
-              />
+              <CategoryPicker movementType={type} value={categoryId} onChange={setCategoryId} />
             </div>
           </>
         )}
@@ -375,136 +360,3 @@ function WalletSelect({
   )
 }
 
-/** Grilla de íconos de categoría (1 toque) + crear inline. */
-function CategoryGrid({
-  categories,
-  value,
-  onChange,
-  movementType,
-  onCreated,
-}: {
-  categories: import('@/features/categories').Category[]
-  value: string
-  onChange: (id: string) => void
-  movementType: MovementType
-  onCreated: (id: string) => void
-}) {
-  const [creating, setCreating] = useState(false)
-  const [name, setName] = useState('')
-  const [icon, setIcon] = useState('tag')
-  const [color, setColor] = useState(CATEGORY_COLORS[0])
-  const createCategory = useCreateCategory()
-
-  const onCreate = () => {
-    if (!name.trim()) return
-    createCategory.mutate(
-      { name: name.trim(), movementType, icon, color },
-      {
-        onSuccess: (cat) => {
-          onCreated(cat.id)
-          setName('')
-          setIcon('tag')
-          setColor(CATEGORY_COLORS[0])
-          setCreating(false)
-          toast.success('Categoría creada')
-        },
-        onError: (err) => toast.error(errorMessage(err)),
-      },
-    )
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-4 gap-2">
-        {categories.map((c) => {
-          const meta = categoryMeta(c)
-          const selected = c.id === value
-          return (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => onChange(c.id)}
-              className={cn(
-                'flex flex-col items-center gap-1 rounded-xl border p-2 text-[11px] font-medium',
-                selected ? 'border-primary bg-primary-soft' : 'border-border',
-              )}
-            >
-              <span
-                className="flex h-9 w-9 items-center justify-center rounded-full"
-                style={{ backgroundColor: meta.color + '22', color: meta.color }}
-              >
-                {selected ? <Check size={18} /> : <meta.icon size={18} />}
-              </span>
-              <span className="line-clamp-1 w-full text-center">{c.name}</span>
-            </button>
-          )
-        })}
-        <button
-          type="button"
-          onClick={() => setCreating((v) => !v)}
-          className="flex flex-col items-center gap-1 rounded-xl border border-dashed p-2 text-[11px] font-medium text-muted-foreground"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-surface">
-            <Plus size={18} />
-          </span>
-          Nueva
-        </button>
-      </div>
-
-      {creating && (
-        <div className="space-y-2.5 rounded-xl border bg-surface p-3">
-          <div className="flex gap-2">
-            <Input
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Nombre de la categoría"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  onCreate()
-                }
-              }}
-            />
-            <Button type="button" onClick={onCreate} disabled={createCategory.isPending}>
-              Crear
-            </Button>
-          </div>
-
-          {/* Ícono */}
-          <div className="grid grid-cols-7 gap-1.5">
-            {Object.entries(CATEGORY_ICONS).map(([k, Icon]) => (
-              <button
-                key={k}
-                type="button"
-                onClick={() => setIcon(k)}
-                className={cn(
-                  'flex h-8 items-center justify-center rounded-lg border transition-colors',
-                  icon === k
-                    ? 'border-primary bg-primary-soft text-primary'
-                    : 'border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground',
-                )}
-              >
-                <Icon size={16} />
-              </button>
-            ))}
-          </div>
-
-          {/* Color */}
-          <div className="flex flex-wrap gap-1.5">
-            {CATEGORY_COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setColor(c)}
-                className={cn('h-6 w-6 rounded-full border-2', color === c ? 'border-foreground' : 'border-transparent')}
-                style={{ backgroundColor: c }}
-                aria-label={`Color ${c}`}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}

@@ -1,6 +1,4 @@
-import { useState } from 'react'
-import { Plus, CalendarClock, Landmark, ArrowDownLeft, ArrowUpRight, Repeat } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Plus, CalendarClock, Landmark, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 import { Money } from '@/components/elements/Money'
 import { IconBadge } from '@/components/elements/IconBadge'
 import { MetricCard } from '@/components/elements/MetricCard'
@@ -9,7 +7,7 @@ import { useOwnerStore } from '@/store/useOwnerStore'
 import { useCategories } from '@/features/categories'
 import { useRecurringRules } from '@/features/recurring'
 import { useTransactionModal } from '@/features/transactions'
-import { useDebts, useDeleteDebt, DebtFormModal, type Debt } from '@/features/debts'
+import { useDebts, useDeleteDebt, useDebtModal, type Debt } from '@/features/debts'
 import { toast } from 'sonner'
 import { errorMessage } from '@/config/api'
 import { Trash2 } from 'lucide-react'
@@ -23,9 +21,9 @@ export function PlanPage() {
   const { data: rules } = useRecurringRules()
   const { data: debts } = useDebts()
   const { data: categories } = useCategories()
-  const openTxn = useTransactionModal((s) => s.open)
+  const openNewTxn = useTransactionModal((s) => s.openNew)
+  const openDebtModal = useDebtModal((s) => s.open)
   const delDebt = useDeleteDebt()
-  const [debtModal, setDebtModal] = useState(false)
 
   const activeRules = (rules ?? []).filter((r) => r.active)
   const incomeRules = activeRules.filter((r) => r.movementType === 'INCOME')
@@ -46,23 +44,11 @@ export function PlanPage() {
   return (
     <div>
       {/* Encabezado */}
-      <div className="mb-6 flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">Plan mensual</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Tus ingresos fijos, gastos fijos y deudas en un solo lugar.
-          </p>
-        </div>
-        {!isReadOnly && (
-          <div className="flex shrink-0 gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => openTxn()}>
-              <Repeat size={15} /> <span className="hidden sm:inline">Movimiento fijo</span>
-            </Button>
-            <Button size="sm" className="gap-1.5" onClick={() => setDebtModal(true)}>
-              <Plus size={15} /> <span className="hidden sm:inline">Deuda</span>
-            </Button>
-          </div>
-        )}
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold">Plan mensual</h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          Tus ingresos fijos, gastos fijos y deudas en un solo lugar.
+        </p>
       </div>
 
       {/* Resumen */}
@@ -74,8 +60,16 @@ export function PlanPage() {
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Ingresos fijos */}
-        <Section title="Ingresos fijos" icon={ArrowDownLeft} isEmpty={incomeRules.length === 0}
-          empty="Sin ingresos fijos. Cargá un sueldo y activá «Repetir cada mes».">
+        <Section
+          title="Ingresos fijos"
+          icon={ArrowDownLeft}
+          isEmpty={incomeRules.length === 0}
+          empty="Sin ingresos fijos. Cargá un sueldo y activá «Repetir cada mes»."
+          action={!isReadOnly ? {
+            label: 'Agregar ingreso fijo',
+            onClick: () => openNewTxn({ movementType: 'INCOME', repeat: true })
+          } : undefined}
+        >
           {incomeRules.map((r) => (
             <RuleRow key={r.id} title={r.description || catName(r.categoryId) || 'Ingreso'}
               amount={r.amount} movementType="INCOME" day={r.dayOfMonth}
@@ -84,8 +78,16 @@ export function PlanPage() {
         </Section>
 
         {/* Gastos fijos */}
-        <Section title="Gastos fijos" icon={ArrowUpRight} isEmpty={expenseRules.length === 0}
-          empty="Sin gastos fijos. Cargá uno y activá «Repetir cada mes».">
+        <Section
+          title="Gastos fijos"
+          icon={ArrowUpRight}
+          isEmpty={expenseRules.length === 0}
+          empty="Sin gastos fijos. Cargá uno y activá «Repetir cada mes»."
+          action={!isReadOnly ? {
+            label: 'Agregar gasto fijo',
+            onClick: () => openNewTxn({ movementType: 'EXPENSE', repeat: true })
+          } : undefined}
+        >
           {expenseRules.map((r) => (
             <RuleRow key={r.id} title={r.description || catName(r.categoryId) || 'Gasto'}
               amount={r.amount} movementType="EXPENSE" day={r.dayOfMonth}
@@ -95,8 +97,16 @@ export function PlanPage() {
 
         {/* Deudas y préstamos */}
         <div className="lg:col-span-2">
-          <Section title="Deudas y préstamos" icon={Landmark} isEmpty={activeDebts.length === 0}
-            empty="Sin deudas ni préstamos. Agregá uno con el botón «Deuda».">
+          <Section
+            title="Deudas y préstamos"
+            icon={Landmark}
+            isEmpty={activeDebts.length === 0}
+            empty="Sin deudas ni préstamos. Agregá uno con el botón «＋»."
+            action={!isReadOnly ? {
+              label: 'Agregar deuda o préstamo',
+              onClick: openDebtModal
+            } : undefined}
+          >
             {iOwe.length > 0 && <GroupLabel>Debo</GroupLabel>}
             {iOwe.map((d) => (
               <DebtRow key={d.id} debt={d} category={catName(d.categoryId)}
@@ -110,8 +120,6 @@ export function PlanPage() {
           </Section>
         </div>
       </div>
-
-      <DebtFormModal open={debtModal} onClose={() => setDebtModal(false)} />
     </div>
   )
 }
@@ -123,20 +131,34 @@ function onDeleteDebt(id: string, del: ReturnType<typeof useDeleteDebt>) {
   })
 }
 
+// ponytail: Section ahora acepta action opcional para botón de agregar
 function Section({
-  title, icon: Icon, empty, isEmpty, children,
+  title, icon: Icon, empty, isEmpty, children, action,
 }: {
   title: string
   icon: typeof Landmark
   empty: string
   isEmpty: boolean
   children: React.ReactNode
+  action?: { label: string; onClick: () => void }
 }) {
   return (
     <section className="rounded-xl border bg-card shadow-sm">
-      <div className="flex items-center gap-2 border-b px-4 py-3.5">
-        <IconBadge icon={Icon} size="sm" />
-        <span className="text-sm font-semibold">{title}</span>
+      <div className="flex items-center justify-between gap-2 border-b px-4 py-3.5">
+        <div className="flex items-center gap-2">
+          <IconBadge icon={Icon} size="sm" />
+          <span className="text-sm font-semibold">{title}</span>
+        </div>
+        {action && (
+          <button
+            onClick={action.onClick}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={action.label}
+            title={action.label}
+          >
+            <Plus size={18} />
+          </button>
+        )}
       </div>
       <div className="px-2 py-1.5">
         {isEmpty ? <p className="px-2 py-6 text-center text-sm text-muted-foreground">{empty}</p> : children}

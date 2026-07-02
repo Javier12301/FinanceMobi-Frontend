@@ -3,6 +3,7 @@ import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { useMe } from '@/features/auth'
 import { TransactionFormModal, TransactionDetailDrawer } from '@/features/transactions'
 import { WalletFormModal } from '@/features/wallets'
+import { DebtFormModal, useDebtModal } from '@/features/debts'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 
@@ -10,6 +11,8 @@ import { BottomNav } from './BottomNav'
 export function MainLayout({ children }: { children: ReactNode }) {
   const isDesktop = useIsDesktop()
   useMe() // enriquece el store con name + driveConnected (una sola vez)
+  const debtOpen = useDebtModal((s) => s.isOpen)
+  const closeDebt = useDebtModal((s) => s.close)
 
   return (
     <div className="flex h-dvh overflow-hidden bg-background text-foreground">
@@ -27,6 +30,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
       <TransactionFormModal />
       <TransactionDetailDrawer />
       <WalletFormModal />
+      <DebtFormModal open={debtOpen} onClose={closeDebt} />
     </div>
   )
 }
