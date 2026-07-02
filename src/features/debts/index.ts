@@ -1,4 +1,6 @@
 export { useDebts, useCreateDebt, useUpdateDebt, useDeleteDebt, usePayDebt } from './api/useDebts'
 export { DebtFormModal } from './components/DebtFormModal'
+export { DebtDetailDrawer } from './components/DebtDetailDrawer'
 export { useDebtModal } from './useDebtModal'
+export { deriveInstallments, installmentProgress } from './installments'
 export type { Debt, CreateDebtInput, UpdateDebtInput, DebtDirection, DebtStatus } from './types/debt'

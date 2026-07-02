@@ -121,10 +121,11 @@ CRUD de movimiento contra backend LAN; auditoría de viewport en 3 tamaños.
 - **Balance**: mostrar balance derivado local (optimista) pero **no** sincronizarlo; el servidor lo recalcula
   al aplicar el replay (mantiene sus locks `FOR UPDATE`) y el refresh reconcilia.
 
-### T2C · Backend idempotente  `[ ]`
-- `POST /api/transactions` debe **aceptar `id` provisto por el cliente** y hacer **upsert-by-id** (replay no
-  duplica). Archivos: `Backend/src/features/transactions/transactions.service.ts` + su validación zod.
-  `// ponytail: upsert por id de cliente; sin esto el replay puede duplicar`.
+### T2C · Backend idempotente  `[x]` HECHO Y VERIFICADO
+- `POST /api/transactions` acepta `id` opcional del cliente (`transactions.schema.ts`) y es **idempotente**:
+  si el `id` ya existe, devuelve la fila sin re-crear ni re-aplicar balance (guard al inicio de
+  `createTransactionInTx`). El front (`useCreateTransaction`) genera el `id` en `onMutate` y lo manda.
+- Verificado E2E: 2 POST con el mismo id → ambos 201, **1 fila**, **balance aplicado una vez** (delta 123).
 
 **No hacer ahora** (solo para multi-dispositivo real): motor `/sync`, `updatedAt/deletedAt/version` uniformes,
 resolución de conflictos. `// ponytail: outbox single-device; migrar a sync engine cuando haya 2+ dispositivos`.

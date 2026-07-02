@@ -52,7 +52,15 @@
 
 ---
 
-## TIER 3 — Migración en tabla de dinero (additiva, con cuidado). Habilita recurrentes "visible + borrable".
+## TIER 3 — Migración en tabla de dinero (additiva). ✅ HECHO Y VERIFICADO
+> Migración `add_recurring_rule_id_to_transaction` aplicada: `Transaction.recurringRuleId String?`.
+> `confirmRuleAtomically` setea el vínculo al cobrar; se expone solo en la API (findMany sin select).
+> Front: `RecurringBanner` ("Este movimiento se repite" + Pausar/Quitar) en la edición de ambos forms cuando
+> `editing.recurringRuleId`. Deshacer un cobro puntual = borrar el movimiento (DELETE revierte balance).
+> Verificado E2E: una regla vencida al confirmar genera una Transaction **con recurringRuleId** apuntando a
+> la regla. NOTA operativa: tras la migración hubo que regenerar el Prisma Client y **reiniciar el backend**
+> (el server corriendo tenía el engine .dll bloqueado — EPERM). El backend quedó reiniciado y sano.
+
 
 > ⚠️ El auto-revert (lo que "podía romper todo") **quedó descartado**. Lo de acá es una columna
 > nullable additiva + exponerla; sin lógica nueva de balance (deshacer = DELETE existente).

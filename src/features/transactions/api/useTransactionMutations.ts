@@ -17,8 +17,8 @@ function useInvalidateAfterTxn() {
 /** POST /api/transactions
  *  Con update optimista: el movimiento se ve al instante y, sin red, la mutación queda
  *  pausada (networkMode online de React Query) y se reenvía sola al reconectar.
- *  ponytail: el id del optimista es solo local; no se manda al backend hasta que POST sea
- *  idempotente por id de cliente (T2C) — hoy el refetch al reconectar reemplaza el temporal. */
+ *  El id lo genera el cliente y se manda al backend: el POST es idempotente (T2C), así el
+ *  replay del outbox no duplica y el optimista comparte el mismo id que la fila del server. */
 export function useCreateTransaction() {
   const queryClient = useQueryClient()
   const ownerId = useOwnerStore((s) => s.activeOwnerId)
@@ -30,9 +30,11 @@ export function useCreateTransaction() {
     },
     onMutate: async (input: CreateTransactionInput) => {
       await queryClient.cancelQueries({ queryKey: ['transactions', ownerId] })
+      // Mismo id para el optimista y el POST (idempotencia del replay offline).
+      input.id ??= crypto.randomUUID()
       const now = new Date().toISOString()
       const optimistic: Transaction = {
-        id: crypto.randomUUID(),
+        id: input.id,
         walletId: input.walletId,
         destinationWalletId: input.destinationWalletId ?? null,
         categoryId: input.categoryId,

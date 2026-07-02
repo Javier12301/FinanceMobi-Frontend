@@ -23,6 +23,7 @@ export function PlanPage() {
   const { data: categories } = useCategories()
   const openNewTxn = useTransactionModal((s) => s.openNew)
   const openDebtModal = useDebtModal((s) => s.open)
+  const openDebtView = useDebtModal((s) => s.openView)
   const delDebt = useDeleteDebt()
 
   const activeRules = (rules ?? []).filter((r) => r.active)
@@ -110,11 +111,13 @@ export function PlanPage() {
             {iOwe.length > 0 && <GroupLabel>Debo</GroupLabel>}
             {iOwe.map((d) => (
               <DebtRow key={d.id} debt={d} category={catName(d.categoryId)}
+                onView={() => openDebtView(d)}
                 onDelete={isReadOnly ? undefined : () => onDeleteDebt(d.id, delDebt)} />
             ))}
             {owedToMe.length > 0 && <GroupLabel>Me deben</GroupLabel>}
             {owedToMe.map((d) => (
               <DebtRow key={d.id} debt={d} category={catName(d.categoryId)}
+                onView={() => openDebtView(d)}
                 onDelete={isReadOnly ? undefined : () => onDeleteDebt(d.id, delDebt)} />
             ))}
           </Section>
@@ -199,38 +202,39 @@ function RuleRow({
 }
 
 function DebtRow({
-  debt, category, onDelete,
+  debt, category, onView, onDelete,
 }: {
   debt: Debt
   category?: string
+  onView?: () => void
   onDelete?: () => void
 }) {
   const owed = debt.direction === 'OWED_TO_ME'
   return (
     <div className="flex items-center justify-between rounded-lg px-2 py-2.5 hover:bg-accent/40">
-      <div className="min-w-0">
-        <div className="truncate text-sm font-medium">{debt.counterparty}</div>
-        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-          {category && <span>{category}</span>}
-          {debt.installmentsTotal != null && (
-            <span>· cuota {(debt.installmentsPaid ?? 0) + 1} de {debt.installmentsTotal}</span>
-          )}
-          {debt.dueDate && <span>· vence {new Date(debt.dueDate).toLocaleDateString('es-AR')}</span>}
+      <button type="button" onClick={onView} className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium">{debt.counterparty}</div>
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+            {category && <span>{category}</span>}
+            {debt.installmentsTotal != null && (
+              <span>· cuota {(debt.installmentsPaid ?? 0) + 1} de {debt.installmentsTotal}</span>
+            )}
+            {debt.dueDate && <span>· vence {new Date(debt.dueDate).toLocaleDateString('es-AR')}</span>}
+          </div>
         </div>
-      </div>
-      <div className="flex items-center gap-3">
-        <div className="text-right">
+        <div className="shrink-0 text-right">
           <span className={owed ? 'text-sm font-semibold tabular-nums text-success' : 'text-sm font-semibold tabular-nums text-destructive'}>
             {formatCurrency(debt.remaining)}
           </span>
           <div className="text-[10px] text-muted-foreground">de {formatCurrency(debt.principal)}</div>
         </div>
-        {onDelete && (
-          <button onClick={onDelete} className="text-destructive" aria-label="Eliminar">
-            <Trash2 size={15} />
-          </button>
-        )}
-      </div>
+      </button>
+      {onDelete && (
+        <button onClick={onDelete} className="ml-3 shrink-0 text-destructive" aria-label="Eliminar">
+          <Trash2 size={15} />
+        </button>
+      )}
     </div>
   )
 }

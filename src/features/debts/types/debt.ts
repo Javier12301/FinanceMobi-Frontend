@@ -16,8 +16,10 @@ export interface Debt {
   categoryId: string | null
   /** Monto original, decimal-string. */
   principal: string
-  /** Saldo pendiente, decimal-string. Baja con cada pago/cobro. */
+  /** Saldo pendiente de capital, decimal-string. Baja solo por la cuota pactada, no por recargos. */
   remaining: string
+  /** Recargos/intereses pagados por encima de lo pactado, decimal-string. Costo extra, no capital. */
+  interestPaid: string
   /** Regla de recurrencia que dispara las cuotas (si tiene plan de cuotas). */
   recurringRuleId: string | null
   /** Cantidad total de cuotas (para "Cuota N de M"); null si es pago único. */

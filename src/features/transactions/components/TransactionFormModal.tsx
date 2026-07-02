@@ -15,12 +15,13 @@ import {
 import { cn } from '@/lib/utils'
 import { errorMessage, isNotAvailable } from '@/config/api'
 import { ResponsiveModal } from '@/components/elements/ResponsiveModal'
+import { TypeSegment, type TypeSegmentOption } from '@/components/elements/TypeSegment'
 import { useWallets } from '@/features/wallets'
 import {
   CategoryPicker,
   type MovementType,
 } from '@/features/categories'
-import { useCreateRecurringRule } from '@/features/recurring'
+import { useCreateRecurringRule, RecurringBanner } from '@/features/recurring'
 import { dateInputToIso, isoToDateInput, dateToInput } from '@/utils/formatDate'
 import { useTransactionModal } from '../useTransactionModal'
 import { useCreateTransaction, useUpdateTransaction } from '../api/useTransactionMutations'
@@ -28,10 +29,10 @@ import { getLastUsed, setLastUsed } from '../lastUsed'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { TransactionMobileForm } from './TransactionMobileForm'
 
-const TYPE_OPTIONS: { type: MovementType; label: string; icon: typeof ArrowUpRight; active: string }[] = [
-  { type: 'EXPENSE', label: 'Gasto', icon: ArrowDownLeft, active: 'border-destructive bg-destructive/10 text-destructive' },
-  { type: 'INCOME', label: 'Ingreso', icon: ArrowUpRight, active: 'border-success bg-success/10 text-success' },
-  { type: 'TRANSFER', label: 'Transferencia', icon: ArrowLeftRight, active: 'border-primary bg-primary-soft text-primary' },
+const TYPE_OPTIONS: TypeSegmentOption<MovementType>[] = [
+  { value: 'EXPENSE', label: 'Gasto', icon: ArrowDownLeft, activeClass: 'border-destructive bg-destructive/10 text-destructive' },
+  { value: 'INCOME', label: 'Ingreso', icon: ArrowUpRight, activeClass: 'border-success bg-success/10 text-success' },
+  { value: 'TRANSFER', label: 'Transferencia', icon: ArrowLeftRight, activeClass: 'border-primary bg-primary-soft text-primary' },
 ]
 
 const todayInput = () => dateToInput(new Date())
@@ -203,24 +204,13 @@ function TransactionFormDesktop() {
       }
     >
       <form id="txn-form" onSubmit={submit} className="flex flex-col gap-3 py-1">
+        {isEdit && editing?.recurringRuleId && (
+          <RecurringBanner ruleId={editing.recurringRuleId} onDone={close} />
+        )}
+
         {/* Tipo (chips). En edición no se puede cambiar el tipo. */}
         {!isEdit && (
-          <div className="grid grid-cols-3 gap-2">
-            {TYPE_OPTIONS.map((opt) => (
-              <button
-                key={opt.type}
-                type="button"
-                onClick={() => onChangeType(opt.type)}
-                className={cn(
-                  'flex flex-col items-center gap-1 rounded-xl border-2 py-2.5 text-xs font-medium transition-colors',
-                  type === opt.type ? opt.active : 'border-transparent bg-surface text-muted-foreground',
-                )}
-              >
-                <opt.icon size={18} />
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <TypeSegment options={TYPE_OPTIONS} value={type} onChange={onChangeType} />
         )}
 
         {/* Monto */}

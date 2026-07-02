@@ -8,6 +8,7 @@ export {
 } from './api/useRecurring'
 export { PendingRecurringCard } from './components/PendingRecurringCard'
 export { RecurringSection } from './components/RecurringSection'
+export { RecurringBanner } from './components/RecurringBanner'
 export type {
   RecurringRule,
   CreateRecurringRuleInput,

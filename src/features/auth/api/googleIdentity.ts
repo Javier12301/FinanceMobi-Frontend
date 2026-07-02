@@ -1,11 +1,11 @@
+import { Capacitor } from '@capacitor/core'
 import { env } from '@/config/env'
 
 /**
- * Carga Google Identity Services y solicita un ID token vía botón/One-Tap.
- * Devuelve el credential (idToken) para enviar a POST /api/auth/google.
- *
- * ponytail: usa el script oficial de GIS bajo demanda; en mobile (Capacitor)
- * se reemplaza por @capacitor-community/google-auth (selector nativo).
+ * Solicita un ID token de Google para enviar a POST /api/auth/google.
+ * - Web: Google Identity Services (script GIS) bajo demanda.
+ * - Nativo (APK): selector nativo vía @capgo/capacitor-social-login.
+ * En ambos casos el idToken lleva `aud` = webClientId, que el backend ya valida.
  */
 
 interface GoogleCredentialResponse {
@@ -51,11 +51,28 @@ export function isGoogleConfigured(): boolean {
   return !!env.googleClientId
 }
 
+let nativeInitialized = false
+
+/** En el APK: selector nativo de Google. webClientId = el Web Client ID (audiencia del idToken). */
+async function requestGoogleIdTokenNative(): Promise<string> {
+  const { SocialLogin } = await import('@capgo/capacitor-social-login')
+  if (!nativeInitialized) {
+    await SocialLogin.initialize({ google: { webClientId: env.googleClientId } })
+    nativeInitialized = true
+  }
+  const login = await SocialLogin.login({ provider: 'google', options: { scopes: ['email', 'profile'] } })
+  // En Android el idToken viene en result.idToken (ver doc del plugin).
+  const idToken = (login as { result?: { idToken?: string | null } }).result?.idToken
+  if (!idToken) throw new Error('Login con Google cancelado')
+  return idToken
+}
+
 /** Abre el prompt de Google y resuelve con el idToken. */
 export async function requestGoogleIdToken(): Promise<string> {
   if (!env.googleClientId) {
     throw new Error('Falta configurar VITE_GOOGLE_CLIENT_ID')
   }
+  if (Capacitor.isNativePlatform()) return requestGoogleIdTokenNative()
   await loadScript()
   return new Promise<string>((resolve, reject) => {
     const id = window.google?.accounts.id

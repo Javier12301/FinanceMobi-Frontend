@@ -11,11 +11,15 @@ export interface Transaction {
   movementType: MovementType
   /** Presente si la transacción provino de un pago de deuda (cuota). */
   debtId?: string | null
+  /** Presente si la transacción la generó una regla recurrente (cobro automático). */
+  recurringRuleId?: string | null
   createdAt: string
   updatedAt: string
 }
 
 export interface CreateTransactionInput {
+  /** id generado por el cliente (alta offline): el POST es idempotente ante reintentos del outbox. */
+  id?: string
   walletId: string
   categoryId: string
   amount: number
