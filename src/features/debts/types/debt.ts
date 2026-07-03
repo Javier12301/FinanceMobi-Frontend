@@ -34,6 +34,7 @@ export interface Debt {
 }
 
 export interface CreateDebtInput {
+  id?: string
   direction: DebtDirection
   counterparty: string
   principal: number

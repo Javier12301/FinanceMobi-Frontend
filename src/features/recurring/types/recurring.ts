@@ -24,6 +24,7 @@ export interface RecurringRule {
 }
 
 export interface CreateRecurringRuleInput {
+  id?: string
   walletId: string
   categoryId: string
   movementType: MovementType
