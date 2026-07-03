@@ -1,8 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Network } from '@capacitor/network'
 import { initDb } from '@/config/db'
+import { env } from '@/config/env'
 import { checkServer } from '@/store/useOnlineStore'
 import { useAuthStore } from '@/store/useAuthStore'
+import { drainOutbox } from '@/features/offline'
 import { queryClient } from './queryClient'
 
 /** Splash mínimo mientras corre el primer health-check. */
@@ -26,7 +28,11 @@ export function AppBoot({ children }: { children: ReactNode }) {
       const reachable = await checkServer()
       if (reachable && useAuthStore.getState().isAuthenticated) {
         // Sube el outbox de la sesión y reconcilia con el server (fuente de verdad).
-        await queryClient.resumePausedMutations()
+        if (env.isNative) {
+          await drainOutbox()
+        } else {
+          await queryClient.resumePausedMutations()
+        }
         await queryClient.invalidateQueries()
       }
       if (!cancelled) setBooted(true)
@@ -34,7 +40,12 @@ export function AppBoot({ children }: { children: ReactNode }) {
     void boot()
 
     // Re-chequear cuando cambia el estado de red (reconexión).
-    const handle = Network.addListener('networkStatusChange', () => { void checkServer() })
+    const handle = Network.addListener('networkStatusChange', async () => {
+      const reachable = await checkServer()
+      if (reachable) {
+        void drainOutbox()
+      }
+    })
     return () => { cancelled = true; void handle.then((h: any) => h.remove()) }
   }, [])
 
