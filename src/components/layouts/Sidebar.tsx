@@ -1,4 +1,3 @@
-import React from 'react'
 import { Link } from '@tanstack/react-router'
 import { LogOut, User } from 'lucide-react'
 import { useAuthStore } from '@/store/useAuthStore'
@@ -62,7 +61,7 @@ export function Sidebar() {
               // HOVER sobre ACTIVO: mantiene los colores activos
               'data-[active=true]:hover:bg-sidebar-accent data-[active=true]:hover:text-sidebar-accent-foreground',
             ].join(' ')}
-            activeProps={{ 'data-active': 'true' } as React.AnchorHTMLAttributes<HTMLAnchorElement>}
+            activeProps={{ 'data-active': 'true' }}
           >
             {({ isActive: _isActive }) => (
               <>

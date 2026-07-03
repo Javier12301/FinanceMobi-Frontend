@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, isNotAvailable } from '@/config/api'
 
 export interface Stats {
@@ -31,5 +31,22 @@ export function useStats() {
         throw e
       }
     },
+  })
+}
+
+/**
+ * POST /api/me/check-in — marca la entrada del día (idempotente) y refresca la racha.
+ * Se dispara al entrar a la app; la racha pertenece al usuario autenticado, no al owner activo.
+ */
+export function useCheckIn() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post<Stats>('/me/check-in')
+      return data
+    },
+    onSuccess: (data) => queryClient.setQueryData(['me-stats'], data),
+    // Silencioso: si el endpoint está dormido (404/501), no molestamos al usuario.
+    onError: () => {},
   })
 }

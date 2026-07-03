@@ -1,10 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { ArrowUpRight, ArrowDownLeft, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
 import { errorMessage } from '@/config/api'
 import {
   Select,
@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ResponsiveModal } from '@/components/elements/ResponsiveModal'
+import { TypeSegment, type TypeSegmentOption } from '@/components/elements/TypeSegment'
+import { dateInputToIso } from '@/utils/formatDate'
 import { useWallets } from '@/features/wallets'
 import { useCreateDebt } from '../api/useDebts'
 import type { DebtDirection } from '../types/debt'
@@ -22,6 +24,23 @@ interface DebtFormModalProps {
   open: boolean
   onClose: () => void
 }
+
+const DIRECTION_OPTIONS: TypeSegmentOption<DebtDirection>[] = [
+  {
+    value: 'I_OWE',
+    label: 'Debo',
+    icon: ArrowUpRight,
+    hint: 'Préstamo de banco, le debo a alguien',
+    activeClass: 'border-primary bg-primary-soft text-primary',
+  },
+  {
+    value: 'OWED_TO_ME',
+    label: 'Me deben',
+    icon: ArrowDownLeft,
+    hint: 'Le presté, me tienen que pagar',
+    activeClass: 'border-primary bg-primary-soft text-primary',
+  },
+]
 
 /** Alta de deuda/préstamo. Local a la pantalla Plan (no es modal global). */
 export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
@@ -37,6 +56,7 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
   const [notes, setNotes] = useState('')
 
   const hasInstallments = Number(installments) > 0
+  const owed = direction === 'OWED_TO_ME'
 
   useEffect(() => {
     if (!open) return
@@ -54,7 +74,7 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
     if (!counterparty.trim()) return toast.error('Ingresá la contraparte (banco, persona…)')
     const amount = Number(principal)
     if (!amount || amount <= 0) return toast.error('Ingresá un monto válido')
-    if (hasInstallments && !walletId) return toast.error('Elegí la billetera de las cuotas')
+    if (hasInstallments && !walletId) return toast.error('Elegí la billetera para las cuotas')
 
     create.mutate(
       {
@@ -62,7 +82,7 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
         counterparty: counterparty.trim(),
         principal: amount,
         ...(hasInstallments ? { installmentsTotal: Number(installments), walletId } : {}),
-        ...(dueDate ? { dueDate: new Date(dueDate).toISOString() } : {}),
+        ...(dueDate ? { dueDate: dateInputToIso(dueDate) } : {}),
         ...(notes.trim() ? { notes: notes.trim() } : {}),
       },
       {
@@ -75,22 +95,6 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
     )
   }
 
-  const dirBtn = (value: DebtDirection, label: string, hint: string) => (
-    <button
-      type="button"
-      onClick={() => setDirection(value)}
-      className={cn(
-        'flex flex-col items-start gap-0.5 rounded-lg border p-3 text-left transition-colors',
-        direction === value
-          ? 'border-primary bg-primary-soft text-primary'
-          : 'text-muted-foreground hover:bg-accent/50',
-      )}
-    >
-      <span className="text-sm font-medium">{label}</span>
-      <span className="text-[11px] font-normal">{hint}</span>
-    </button>
-  )
-
   return (
     <ResponsiveModal
       open={open}
@@ -99,11 +103,34 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
       className="sm:max-w-lg"
     >
       <form id="debt-form" onSubmit={onSubmit} className="flex flex-col gap-4 py-1">
-        <div className="grid grid-cols-2 gap-2">
-          {dirBtn('I_OWE', 'Debo', 'Préstamo de banco, le debo a alguien')}
-          {dirBtn('OWED_TO_ME', 'Me deben', 'Le presté, me tienen que pagar')}
+        {/* Dirección */}
+        <TypeSegment
+          variant="card"
+          options={DIRECTION_OPTIONS}
+          value={direction}
+          onChange={setDirection}
+        />
+
+        {/* Monto protagonista */}
+        <div className="rounded-xl border border-border bg-surface px-4 py-3 text-center">
+          <div className="text-xs font-medium text-muted-foreground">Monto total</div>
+          <div className="flex items-center justify-center gap-1">
+            <span className="text-2xl font-bold text-muted-foreground">$</span>
+            <input
+              id="d-principal"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              placeholder="0"
+              value={principal}
+              onChange={(e) => setPrincipal(e.target.value)}
+              className="w-full min-w-0 bg-transparent text-center text-3xl font-bold tracking-tight text-foreground outline-none placeholder:text-muted-foreground/50"
+            />
+          </div>
         </div>
 
+        {/* Contraparte */}
         <div className="space-y-1.5">
           <Label htmlFor="d-counterparty">Contraparte</Label>
           <Input
@@ -114,24 +141,7 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="d-principal">Monto total</Label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
-            <Input
-              id="d-principal"
-              type="number"
-              inputMode="decimal"
-              min="0"
-              step="0.01"
-              placeholder="0"
-              value={principal}
-              onChange={(e) => setPrincipal(e.target.value)}
-              className="pl-7"
-            />
-          </div>
-        </div>
-
+        {/* Cuotas + vencimiento */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="d-installments">
@@ -149,17 +159,17 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="d-due">
-              Vencimiento <span className="font-normal text-muted-foreground">(opcional)</span>
+              Última cuota <span className="font-normal text-muted-foreground">(opcional)</span>
             </Label>
             <Input id="d-due" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </div>
         </div>
 
+        {/* Billetera sugerida (solo si hay cuotas) */}
         {hasInstallments && (
           <div className="space-y-1.5">
             <Label htmlFor="d-wallet">
-              Billetera de pago{' '}
-              <span className="font-normal text-muted-foreground">(de acá sale cada cuota)</span>
+              {owed ? 'Billetera sugerida para cobrar' : 'Billetera sugerida para pagar'}
             </Label>
             <Select value={walletId} onValueChange={setWalletId}>
               <SelectTrigger id="d-wallet" className="w-full">
@@ -173,9 +183,13 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">
+              Se usará cuando confirmes {owed ? 'cada cobro' : 'cada pago'}.
+            </p>
           </div>
         )}
 
+        {/* Nota */}
         <div className="space-y-1.5">
           <Label htmlFor="d-notes">
             Nota <span className="font-normal text-muted-foreground">(opcional)</span>
@@ -188,6 +202,12 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
             onChange={(e) => setNotes(e.target.value)}
             className="resize-none"
           />
+        </div>
+
+        {/* Aclaración: sin débito automático */}
+        <div className="flex items-start gap-2 rounded-lg bg-primary-soft px-3 py-2.5 text-xs text-primary">
+          <Info size={15} className="mt-0.5 shrink-0" />
+          <span>El dinero no se mueve automáticamente. Cada {owed ? 'cobro' : 'pago'} se registra cuando lo confirmes.</span>
         </div>
       </form>
 

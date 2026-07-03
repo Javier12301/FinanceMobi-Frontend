@@ -44,8 +44,17 @@ export function WalletFormModal() {
     const onError = (err: unknown) => toast.error(errorMessage(err))
 
     if (isEdit) {
+      const initialChanged = initialBalance !== '' && Number(initialBalance) !== Number(editing.initialBalance)
       update.mutate(
-        { id: editing.id, input: { name, typeId, description: description || undefined } },
+        {
+          id: editing.id,
+          input: {
+            name,
+            typeId,
+            description: description || undefined,
+            ...(initialChanged ? { initialBalance: Number(initialBalance) } : {}),
+          },
+        },
         {
           onSuccess: () => {
             toast.success('Billetera actualizada')
@@ -121,24 +130,28 @@ export function WalletFormModal() {
           />
         </div>
 
-        {!isEdit && (
-          <div className="space-y-1.5">
-            <Label htmlFor="w-balance">Saldo inicial</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
-              <Input
-                id="w-balance"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0"
-                value={initialBalance}
-                onChange={(e) => setInitialBalance(e.target.value)}
-                className="pl-7"
-              />
-            </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="w-balance">Saldo inicial</Label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+            <Input
+              id="w-balance"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              placeholder="0"
+              value={initialBalance}
+              onChange={(e) => setInitialBalance(e.target.value)}
+              className="pl-7"
+            />
           </div>
-        )}
+          {isEdit && (
+            <p className="text-xs text-muted-foreground">
+              Si te equivocaste al cargarlo, corregilo acá. El saldo actual se ajusta por la misma diferencia.
+            </p>
+          )}
+        </div>
       </form>
 
       <div className="flex justify-end gap-2.5 pt-2">

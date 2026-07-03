@@ -55,18 +55,6 @@ El norte del producto es **bajar la fricción de cargar movimientos** (la app mu
 
 **Documentarse antes de aplicar/recomendar librerías:** usar **context7** (`resolve-library-id` → `query-docs`) para TanStack Router/Query, shadcn, Tailwind v4, etc. Las versiones se mueven; no asumir de memoria.
 
-**Skills recomendadas según la tarea** (sugerirlas/usarlas cuando apliquen):
-- `cognitive-doc-design` — al escribir docs/guías/RFCs en `docs/`.
-- `chrome-devtools-mcp:a11y-debugging` — tap targets ≥44px, foco, contraste (clave en mobile).
-- `chrome-devtools-mcp:debug-optimize-lcp` — performance de carga.
-- `context7-mcp` — documentación de librerías actualizada.
-- `ponytail` — mantener cada implementación mínima (ya activo por defecto).
-- `code-review` / `simplify` — antes de cerrar un cambio grande.
-
 ## Orquestación de implementaciones (subagentes)
 
-- **Orquestador** = el modelo en uso por el usuario (Sonnet u Opus). Planifica, divide en tareas chicas e integra.
-- **Implementación** = subagentes **Haiku** con la skill **ponytail** activa, una tarea acotada por subagente (ej: "crear feature `budgets` con su hook y card", "agregar pantalla de categorías").
-- **Prohibido subagentes anidados**: un subagente NO debe lanzar otros subagentes (consumo de contexto explosivo). El fan-out lo hace solo el orquestador.
-- Dar a cada subagente contexto autocontenido (archivos relevantes, convención a seguir) porque arranca en frío.
-- Cambios que repiten patrón entre features → describir el patrón una vez y pasar 1-2 rutas de ejemplo, no enumerar todo.
+Este proyecto implementa cambios con subagentes Haiku dirigidos por un orquestador Sonnet/Opus. **El detalle de roles, skills recomendadas y cómo armar el prompt vive en `docs/orquestacion-subagentes.md` y es solo para el orquestador** — no se le indica a un subagente que lea ese documento ni este `CLAUDE.md` completo; recibe únicamente el extracto de convención/arquitectura que le toca.

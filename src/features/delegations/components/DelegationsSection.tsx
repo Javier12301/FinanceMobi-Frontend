@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { ConfirmDialog } from '@/components/elements/ConfirmDialog'
 import { errorMessage } from '@/config/api'
 import { useOwnerStore } from '@/store/useOwnerStore'
@@ -42,63 +43,73 @@ export function DelegationsSection() {
   return (
     <section>
       <SectionLabel>Delegación</SectionLabel>
-      <div className="overflow-hidden rounded-xl border bg-card">
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <span className="text-sm font-semibold">Personas con acceso a mi cuenta</span>
-          <Button size="sm" onClick={() => setInviteOpen(true)}>
-            <Plus size={14} /> Invitar
-          </Button>
-        </div>
+      <div className="rounded-xl border bg-card p-3">
+        <Tabs defaultValue="granted">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="granted">Acceso a mi cuenta</TabsTrigger>
+            <TabsTrigger value="managing">Cuentas que gestiono</TabsTrigger>
+          </TabsList>
 
-        {isError && (
-          <p className="px-4 py-4 text-sm text-muted-foreground">
-            No se pudieron cargar las delegaciones.
-          </p>
-        )}
-        {isLoading && <p className="px-4 py-4 text-sm text-muted-foreground">Cargando…</p>}
+          {isError && (
+            <p className="px-1 py-4 text-sm text-muted-foreground">No se pudieron cargar las delegaciones.</p>
+          )}
+          {isLoading && <p className="px-1 py-4 text-sm text-muted-foreground">Cargando…</p>}
 
-        {data?.granted.map((d) => (
-          <div key={d.id} className="flex items-center justify-between border-b px-4 py-3 last:border-b-0">
-            <div className="flex items-center gap-2.5">
-              <Avatar name={d.user.name} />
-              <div>
-                <div className="text-sm font-medium">{d.user.name}</div>
-                <div className="text-xs text-muted-foreground">{d.user.email}</div>
-              </div>
+          {/* Personas con acceso a mi cuenta */}
+          <TabsContent value="granted" className="mt-3">
+            <div className="divide-y divide-border">
+              {data?.granted.map((d) => (
+                <div key={d.id} className="flex items-center justify-between py-3 first:pt-0">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <Avatar name={d.user.name} />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{d.user.name}</div>
+                      <div className="truncate text-xs text-muted-foreground">{d.user.email}</div>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2.5">
+                    <RoleBadge role={d.role} />
+                    <button onClick={() => setToRevoke(d)} className="flex items-center gap-1 text-xs text-destructive">
+                      <Trash2 size={14} /> Revocar
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center gap-2.5">
-              <RoleBadge role={d.role} />
-              <button onClick={() => setToRevoke(d)} className="flex items-center gap-1 text-xs text-destructive">
-                <Trash2 size={14} /> Revocar
-              </button>
-            </div>
-          </div>
-        ))}
-        {data && data.granted.length === 0 && !isError && (
-          <p className="px-4 py-4 text-sm text-muted-foreground">Nadie tiene acceso a tu cuenta todavía.</p>
-        )}
+            {data && data.granted.length === 0 && !isError && (
+              <p className="py-4 text-sm text-muted-foreground">Nadie tiene acceso a tu cuenta todavía.</p>
+            )}
+            <Button variant="outline" className="mt-3 w-full" onClick={() => setInviteOpen(true)}>
+              <Plus size={15} /> Invitar persona
+            </Button>
+          </TabsContent>
 
-        <div className="border-y bg-surface px-4 py-3 text-sm font-semibold">Cuentas que gestiono</div>
-        {data?.managing.map((d) => (
-          <div key={d.id} className="flex items-center justify-between border-b px-4 py-3 last:border-b-0">
-            <div className="flex items-center gap-2.5">
-              <Avatar name={d.user.name} />
-              <div>
-                <div className="text-sm font-medium">{d.user.name}</div>
-                <div className="text-xs text-muted-foreground">{d.user.email}</div>
-              </div>
+          {/* Cuentas que gestiono */}
+          <TabsContent value="managing" className="mt-3">
+            <div className="divide-y divide-border">
+              {data?.managing.map((d) => (
+                <div key={d.id} className="flex items-center justify-between py-3 first:pt-0">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <Avatar name={d.user.name} />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{d.user.name}</div>
+                      <div className="truncate text-xs text-muted-foreground">{d.user.email}</div>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2.5">
+                    <RoleBadge role={d.role} />
+                    <Button size="sm" variant="outline" className="border-primary text-primary" onClick={() => onView(d)}>
+                      Ver cuenta
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex items-center gap-2.5">
-              <RoleBadge role={d.role} />
-              <Button size="sm" variant="outline" className="border-primary text-primary" onClick={() => onView(d)}>
-                Ver cuenta
-              </Button>
-            </div>
-          </div>
-        ))}
-        {data && data.managing.length === 0 && !isError && (
-          <p className="px-4 py-4 text-sm text-muted-foreground">No gestionás otras cuentas.</p>
-        )}
+            {data && data.managing.length === 0 && !isError && (
+              <p className="py-4 text-sm text-muted-foreground">No gestionás otras cuentas.</p>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
       <InviteDelegateModal open={inviteOpen} onOpenChange={setInviteOpen} />

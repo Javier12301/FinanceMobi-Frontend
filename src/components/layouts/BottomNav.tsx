@@ -1,46 +1,77 @@
+import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useOwnerStore } from '@/store/useOwnerStore'
-import { useTransactionModal } from '@/features/transactions'
 import { navItems } from './navItems'
+import { QuickActionsSheet } from './QuickActionsSheet'
 
-/** Barra inferior + FAB de registro rápido (mobile). */
+/** Items a mostrar en la barra móvil: Inicio, Billeteras, Plan, Ajustes (sin Movimientos). */
+const MOBILE_NAV_ITEMS = navItems.filter((item) => item.to !== '/transactions')
+
+/** Barra inferior mobile con 4 tabs + botón central elevado de acciones rápidas. */
 export function BottomNav() {
   const isReadOnly = useOwnerStore((s) => s.isReadOnly)
-  const openTxn = useTransactionModal((s) => s.open)
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   return (
     <>
-      {/* FAB */}
-      {!isReadOnly && (
-        <button
-          onClick={() => openTxn()}
-          aria-label="Registrar movimiento"
-          className="fixed bottom-20 left-1/2 z-30 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 active:scale-95"
-        >
-          <Plus size={26} />
-        </button>
-      )}
-
-      {/* Tab bar */}
+      {/* Tab bar: 2 izq + espaciador central + 2 der */}
       <nav className="fixed inset-x-0 bottom-0 z-20 flex h-16 border-t bg-background pb-[env(safe-area-inset-bottom)]">
-        {navItems.map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-            className="flex flex-1 flex-col items-center justify-center gap-1 text-[11px] text-muted-foreground"
-            activeProps={{ className: 'text-primary' }}
-          >
-            {({ isActive }) => (
-              <>
-                <item.icon size={20} className={cn(isActive && 'text-primary')} />
-                {item.label}
-              </>
-            )}
-          </Link>
-        ))}
+        {/* Primera mitad (2 items a la izquierda) */}
+        <div className="flex flex-1">
+          {MOBILE_NAV_ITEMS.slice(0, 2).map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="flex flex-1 flex-col items-center justify-center gap-1 text-[11px] text-muted-foreground"
+              activeProps={{ className: 'text-primary' }}
+            >
+              {({ isActive }) => (
+                <>
+                  <item.icon size={20} className={cn(isActive && 'text-primary')} />
+                  {item.label}
+                </>
+              )}
+            </Link>
+          ))}
+        </div>
+
+        {/* Centro: botón '+' elevado (oculto si isReadOnly) */}
+        <div className="relative flex w-16 items-center justify-center">
+          {!isReadOnly && (
+            <button
+              onClick={() => setSheetOpen(true)}
+              aria-label="Abrir menú de acciones rápidas"
+              className="absolute bottom-1 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-105 active:scale-95"
+            >
+              <Plus size={26} />
+            </button>
+          )}
+        </div>
+
+        {/* Segunda mitad (2 items a la derecha) */}
+        <div className="flex flex-1">
+          {MOBILE_NAV_ITEMS.slice(2, 4).map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="flex flex-1 flex-col items-center justify-center gap-1 text-[11px] text-muted-foreground"
+              activeProps={{ className: 'text-primary' }}
+            >
+              {({ isActive }) => (
+                <>
+                  <item.icon size={20} className={cn(isActive && 'text-primary')} />
+                  {item.label}
+                </>
+              )}
+            </Link>
+          ))}
+        </div>
       </nav>
+
+      {/* Bottom sheet de acciones rápidas */}
+      <QuickActionsSheet open={sheetOpen} onOpenChange={setSheetOpen} />
     </>
   )
 }

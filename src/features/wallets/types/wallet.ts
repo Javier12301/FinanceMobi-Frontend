@@ -26,4 +26,6 @@ export interface UpdateWalletInput {
   name?: string
   typeId?: number
   description?: string
+  /** Corregir saldo inicial: el backend ajusta el saldo actual por la misma diferencia. */
+  initialBalance?: number
 }

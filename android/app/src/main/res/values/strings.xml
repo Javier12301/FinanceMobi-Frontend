@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FinanceMobile</string>
+    <string name="title_activity_main">FinanceMobile</string>
+    <string name="package_name">com.financemobile.app</string>
+    <string name="custom_url_scheme">com.financemobile.app</string>
+</resources>

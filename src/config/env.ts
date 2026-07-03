@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -12,10 +13,46 @@ if (!parsed.success) {
   throw new Error('Configuración de entorno inválida. Revisá tu archivo .env (ver .env.example).')
 }
 
+const data = parsed.data
+
+// En el APK (Capacitor) window.location es localhost://, así que la URL del backend
+// no puede derivarse del host: la configura el usuario y se persiste en localStorage.
+// ponytail: localStorage alcanza en el WebView de Capacitor (persiste entre reinicios);
+// migrar a @capacitor/preferences solo si el SO empieza a limpiar el storage del WebView.
+const SERVER_URL_KEY = 'fv.serverUrl'
+
+export function getServerUrl(): string | null {
+  try {
+    return localStorage.getItem(SERVER_URL_KEY)
+  } catch {
+    return null
+  }
+}
+
+/** Guarda la URL del backend y recarga para que axios tome la nueva baseURL.
+ *  ponytail: recarga en vez de recrear el cliente axios; se configura una vez. */
+export function setServerUrl(url: string): void {
+  try {
+    localStorage.setItem(SERVER_URL_KEY, url.trim().replace(/\/+$/, ''))
+  } catch {
+    /* noop */
+  }
+  window.location.reload()
+}
+
+function resolveApiBaseUrl(): string {
+  if (Capacitor.isNativePlatform()) {
+    const base = getServerUrl()
+    return base ? `${base}/api` : '' // vacío ⇒ Ajustes pide configurar la URL del servidor
+  }
+  if (import.meta.env.MODE === 'lan' || data.VITE_API_BASE_URL === 'auto') {
+    return `${window.location.protocol}//${window.location.hostname}:3000/api`
+  }
+  return data.VITE_API_BASE_URL
+}
+
 export const env = {
-  apiBaseUrl:
-    import.meta.env.MODE === 'lan' || parsed.data.VITE_API_BASE_URL === 'auto'
-      ? `${window.location.protocol}//${window.location.hostname}:3000/api`
-      : parsed.data.VITE_API_BASE_URL,
-  googleClientId: parsed.data.VITE_GOOGLE_CLIENT_ID,
+  apiBaseUrl: resolveApiBaseUrl(),
+  googleClientId: data.VITE_GOOGLE_CLIENT_ID,
+  isNative: Capacitor.isNativePlatform(),
 }

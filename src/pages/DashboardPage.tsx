@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Link } from '@tanstack/react-router'
-import { Bell, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { MetricCard } from '@/components/elements/MetricCard'
@@ -19,6 +19,7 @@ import {
   type Transaction,
 } from '@/features/transactions'
 import { PendingRecurringCard } from '@/features/recurring'
+import { NotificationsBell } from '@/features/notifications'
 import { useStats } from '@/features/auth'
 
 // ponytail: lazy => recharts queda fuera del chunk crítico del dashboard.
@@ -88,23 +89,26 @@ export function DashboardPage() {
               <span className="hidden sm:inline">Registrar</span>
             </Button>
           )}
-          <Bell size={20} className="text-muted-foreground" />
+          <NotificationsBell />
         </div>
       </div>
 
-      {/* Racha de actividad */}
-      {stats && (stats.currentStreak > 0 ? (
-        <div className="mb-4 flex items-center gap-2">
-          <span className="rounded-full bg-primary-soft px-3 py-1 text-sm font-semibold text-primary">
-            🔥 {stats.currentStreak} {stats.currentStreak === 1 ? 'día' : 'días'} seguidos
-          </span>
-          {stats.longestStreak > stats.currentStreak && (
-            <span className="text-xs text-muted-foreground">Récord: {stats.longestStreak}</span>
-          )}
+      {/* Racha de actividad (por check-in diario) */}
+      {stats && stats.currentStreak > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-primary-soft px-3 py-1 text-sm font-semibold text-primary">
+              🔥 Racha: {stats.currentStreak} {stats.currentStreak === 1 ? 'día' : 'días'}
+            </span>
+            {stats.longestStreak > stats.currentStreak && (
+              <span className="text-xs text-muted-foreground">Récord: {stats.longestStreak}</span>
+            )}
+          </div>
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="size-2 rounded-full bg-success" /> Entraste hoy
+          </div>
         </div>
-      ) : stats.totalMovements === 0 ? (
-        <p className="mb-4 text-xs text-muted-foreground">Cargá un gasto para empezar tu racha 🔥</p>
-      ) : null)}
+      )}
 
       {/* Recurrentes vencidos por confirmar (oculto si no hay / endpoint dormido) */}
       <PendingRecurringCard />
