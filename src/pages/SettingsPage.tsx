@@ -9,6 +9,7 @@ import { ResponsiveModal } from '@/components/elements/ResponsiveModal'
 import { env, getServerUrl, setServerUrl } from '@/config/env'
 import { useThemeStore } from '@/hooks/useTheme'
 import { useAuthStore } from '@/store/useAuthStore'
+import { useServerReachable } from '@/store/useOnlineStore'
 import { useLogout } from '@/features/auth'
 import { DriveSection } from '@/features/drive'
 import { DelegationsSection } from '@/features/delegations'
@@ -67,6 +68,7 @@ function ServerUrlSection() {
 
 export function SettingsPage() {
   const user = useAuthStore((s) => s.user)
+  const online = useServerReachable()
   const [profileOpen, setProfileOpen] = useState(false)
 
   const name = user?.name ?? user?.email?.split('@')[0] ?? 'Usuario'
@@ -111,8 +113,16 @@ export function SettingsPage() {
         {env.isNative && <ServerUrlSection />}
 
         <NotificationsSection />
-        <DriveSection />
-        <DelegationsSection />
+        {online ? (
+          <>
+            <DriveSection />
+            <DelegationsSection />
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Supervisión de cuentas y Google Drive requieren conexión con el servidor.
+          </p>
+        )}
       </div>
 
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} name={name} email={user?.email} initial={initial} />
