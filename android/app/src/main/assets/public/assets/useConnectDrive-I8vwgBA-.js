@@ -1,0 +1,1 @@
+import{u as n}from"./useMutation-CF3GdolQ.js";import{b as a}from"./index-DLxzv8N8.js";function i(){return n({mutationFn:async()=>{const{data:t}=await a.get("/drive/auth-url");return t}})}function s(){return n({mutationFn:async({code:t,state:r})=>{const{data:u}=await a.post("/drive/connect",{code:t,state:r});return u}})}export{s as a,i as u};
