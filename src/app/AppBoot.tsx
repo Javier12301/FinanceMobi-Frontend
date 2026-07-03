@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Network } from '@capacitor/network'
+import { initDb } from '@/config/db'
 import { checkServer } from '@/store/useOnlineStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { queryClient } from './queryClient'
@@ -21,6 +22,7 @@ export function AppBoot({ children }: { children: ReactNode }) {
     let cancelled = false
 
     async function boot() {
+      await initDb() // no-op en web
       const reachable = await checkServer()
       if (reachable && useAuthStore.getState().isAuthenticated) {
         // Sube el outbox de la sesión y reconcilia con el server (fuente de verdad).
