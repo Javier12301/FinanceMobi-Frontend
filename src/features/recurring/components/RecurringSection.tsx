@@ -21,9 +21,6 @@ export function RecurringSection() {
 
   return (
     <section>
-      <div className="mb-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Movimientos recurrentes
-      </div>
       <div className="rounded-xl border bg-card">
         {!rules || rules.length === 0 ? (
           <div className="flex items-center gap-3 px-5 py-4 text-sm text-muted-foreground">

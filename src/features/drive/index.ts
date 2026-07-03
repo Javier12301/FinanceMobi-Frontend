@@ -1,2 +1,2 @@
-export { useConnectDrive, useGetDriveAuthUrl } from './api/useConnectDrive'
+export { useConnectDrive, useGetDriveAuthUrl, useDisconnectDrive } from './api/useConnectDrive'
 export { DriveSection } from './components/DriveSection'

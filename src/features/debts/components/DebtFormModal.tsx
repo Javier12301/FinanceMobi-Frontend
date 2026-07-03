@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select'
 import { ResponsiveModal } from '@/components/elements/ResponsiveModal'
 import { TypeSegment, type TypeSegmentOption } from '@/components/elements/TypeSegment'
+import { dateInputToIso } from '@/utils/formatDate'
 import { useWallets } from '@/features/wallets'
 import { useCreateDebt } from '../api/useDebts'
 import type { DebtDirection } from '../types/debt'
@@ -81,7 +82,7 @@ export function DebtFormModal({ open, onClose }: DebtFormModalProps) {
         counterparty: counterparty.trim(),
         principal: amount,
         ...(hasInstallments ? { installmentsTotal: Number(installments), walletId } : {}),
-        ...(dueDate ? { dueDate: new Date(dueDate).toISOString() } : {}),
+        ...(dueDate ? { dueDate: dateInputToIso(dueDate) } : {}),
         ...(notes.trim() ? { notes: notes.trim() } : {}),
       },
       {

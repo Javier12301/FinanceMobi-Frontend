@@ -462,7 +462,7 @@ export function TransactionMobileForm() {
             </div>
           </div>
 
-          {/* Montos sugeridos (rápidos) */}
+          {/* Montos rápidos (aditivos: tocar dos veces $1.000 = $2.000) */}
           <div className="px-3 py-2 flex gap-1.5 justify-center [@media(max-height:640px)]:gap-1 [@media(max-height:640px)]:px-2 [@media(max-height:640px)]:py-1">
             {[1000, 5000, 10000].map((sug) => (
               <button
@@ -470,11 +470,16 @@ export function TransactionMobileForm() {
                 type="button"
                 onPointerDown={(e) => {
                   e.preventDefault()
-                  setAmount(String(sug))
+                  setAmount((prev) => {
+                    const next = (Number(prev) || 0) + sug
+                    // respetar el mismo tope de dígitos que el keypad
+                    if (String(Math.trunc(next)).length > 10) return prev
+                    return String(next)
+                  })
                 }}
                 className="min-h-10 flex-1 rounded-lg border border-primary bg-primary-soft px-2 text-xs font-semibold text-primary transition-colors active:scale-95 [@media(max-height:640px)]:min-h-8"
               >
-                ${sug.toLocaleString('es-AR')}
+                +${sug.toLocaleString('es-AR')}
               </button>
             ))}
           </div>
@@ -591,7 +596,7 @@ function ContextSheet({
                 <Label htmlFor="tm-auto" className="text-sm font-medium">
                   Cargar automáticamente
                   <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-                    Se registra solo cada mes, sin confirmar
+                    Se registra solo cada mes
                   </span>
                 </Label>
                 <Switch id="tm-auto" checked={autoPost} onCheckedChange={setAutoPost} />

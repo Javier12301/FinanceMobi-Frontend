@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button'
 import { IconBadge } from '@/components/elements/IconBadge'
 import { useAuthStore } from '@/store/useAuthStore'
 import { errorMessage } from '@/config/api'
-import { useGetDriveAuthUrl } from '../api/useConnectDrive'
+import { useGetDriveAuthUrl, useDisconnectDrive } from '../api/useConnectDrive'
 
 export function DriveSection() {
   const connected = useAuthStore((s) => s.user?.driveConnected ?? false)
   const getAuthUrl = useGetDriveAuthUrl()
+  const disconnect = useDisconnectDrive()
 
   const onConnect = async () => {
     try {
@@ -17,6 +18,13 @@ export function DriveSection() {
     } catch (e) {
       toast.error(errorMessage(e))
     }
+  }
+
+  const onDisconnect = () => {
+    disconnect.mutate(undefined, {
+      onSuccess: () => toast.success('Google Drive desconectado'),
+      onError: (e) => toast.error(errorMessage(e)),
+    })
   }
 
   return (
@@ -34,9 +42,14 @@ export function DriveSection() {
         </div>
         <div className="flex items-center gap-2.5">
           {connected ? (
-            <span className="rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-medium text-success">
-              Conectado
-            </span>
+            <>
+              <span className="rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-medium text-success">
+                Conectado
+              </span>
+              <Button size="sm" variant="outline" onClick={onDisconnect} disabled={disconnect.isPending}>
+                {disconnect.isPending ? 'Desconectando…' : 'Desconectar'}
+              </Button>
+            </>
           ) : (
             <>
               <span className="rounded-full bg-surface px-2.5 py-0.5 text-xs font-medium text-muted-foreground">

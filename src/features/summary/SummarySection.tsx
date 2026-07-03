@@ -5,11 +5,9 @@ import { useSummary, useInsights } from './useSummary'
 
 /** Sección "¿En qué se me va?" del dashboard: donut por categoría + evolución mensual + presupuestos. */
 export function SummarySection() {
-  const { byCategory, byMonth, hasData } = useSummary()
+  const { byCategory, byMonth } = useSummary()
   const budgets = useBudgetProgress()
   const { data: insights } = useInsights()
-
-  if (!hasData) return null
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -51,7 +49,11 @@ export function SummarySection() {
             )}
           </div>
         )}
-        <MonthlyBars data={byMonth} />
+        {byMonth.some((m) => m.income > 0 || m.expense > 0) ? (
+          <MonthlyBars data={byMonth} />
+        ) : (
+          <p className="py-8 text-center text-sm text-muted-foreground">Todavía no hay historial para mostrar.</p>
+        )}
         {budgets.length > 0 && (
           <div className="mt-4 space-y-2.5">
             <div className="text-xs font-semibold text-muted-foreground">Presupuestos</div>
