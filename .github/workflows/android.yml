@@ -1,0 +1,72 @@
+name: Build Android APK
+
+# Corre a mano (workflow_dispatch) o al pushear un tag vX.Y.Z (publica el APK en un Release).
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # El SDK de Android viene preinstalado en ubuntu-latest; no hace falta instalarlo.
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Build web (Vite)
+        run: npm run build
+        env:
+          # En el APK la baseURL la configura el usuario en Ajustes (IP LAN); 'auto' solo pasa la validación del schema.
+          VITE_API_BASE_URL: auto
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+
+      - name: Capacitor sync
+        run: npx cap sync android
+
+      - name: Decodificar keystore desde secret
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.keystore"
+
+      - name: Compilar APK firmado (release)
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          # versionCode = número de run, así cada APK se puede instalar encima del anterior.
+          ANDROID_VERSION_CODE: ${{ github.run_number }}
+
+      - name: Renombrar APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk financemobile.apk
+
+      # Descarga desde la pestaña Actions del run (requiere estar logueado en GitHub).
+      - name: Subir APK como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: financemobile-apk
+          path: financemobile.apk
+
+      # Solo en tags vX.Y.Z: publica el APK en un Release → URL directa descargable desde el celu (para QR).
+      - name: Publicar en Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: financemobile.apk
