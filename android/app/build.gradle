@@ -7,8 +7,7 @@ android {
         applicationId "com.financemobile.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // versionCode se toma del CI (número de build) para poder instalar actualizaciones encima; 1 por defecto en local.
-        versionCode (System.getenv("ANDROID_VERSION_CODE") ?: "1").toInteger()
+        versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
@@ -17,26 +16,10 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    // Firma de release: solo se activa si el CI pasó el keystore por variables de entorno.
-    // Sin esas variables (build local), el release queda sin firmar y no se rompe nada.
-    signingConfigs {
-        release {
-            def ksFile = System.getenv("ANDROID_KEYSTORE_FILE")
-            if (ksFile) {
-                storeFile file(ksFile)
-                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
-                keyAlias System.getenv("ANDROID_KEY_ALIAS")
-                keyPassword System.getenv("ANDROID_KEY_PASSWORD")
-            }
-        }
-    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            if (System.getenv("ANDROID_KEYSTORE_FILE")) {
-                signingConfig signingConfigs.release
-            }
         }
     }
 }
