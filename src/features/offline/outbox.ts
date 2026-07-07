@@ -1,0 +1,50 @@
+import { getDb } from '@/config/db'
+import { env } from '@/config/env'
+import { api, isApiError } from '@/config/api'
+import { queryClient } from '@/app/queryClient'
+
+interface OutboxRow {
+  id: string
+  method: string
+  endpoint: string
+  body_json: string
+}
+
+export async function enqueueMutation(m: {
+  id: string
+  ownerId: string | null
+  method: string
+  endpoint: string
+  body: unknown
+}): Promise<void> {
+  if (!env.isNative) return
+  await getDb().run(
+    `INSERT OR IGNORE INTO pending_mutations (id, owner_id, method, endpoint, body_json, created_at)
+     VALUES (?,?,?,?,?,?)`,
+    [m.id, m.ownerId, m.method, m.endpoint, JSON.stringify(m.body), Date.now()],
+  )
+}
+
+/** Reenvía el outbox en orden FIFO. Idempotente en el server (mismo id → no duplica). */
+export async function drainOutbox(): Promise<void> {
+  if (!env.isNative) return
+  const res = await getDb().query(
+    `SELECT id, method, endpoint, body_json FROM pending_mutations ORDER BY created_at ASC`,
+  )
+  const rows = (res.values ?? []) as OutboxRow[]
+  for (const row of rows) {
+    try {
+      await api.request({ method: row.method, url: row.endpoint, data: JSON.parse(row.body_json) })
+      await getDb().run(`DELETE FROM pending_mutations WHERE id = ?`, [row.id])
+    } catch (e) {
+      if (isApiError(e) && e.status >= 400 && e.status < 500) {
+        // 4xx: no reintentable (validación/duplicado ya aplicado). Marcar y seguir con la cola.
+        await getDb().run(`UPDATE pending_mutations SET tries = tries + 1, last_error = ? WHERE id = ?`, [e.message, row.id])
+        continue
+      }
+      // Error de red: el server se cayó de nuevo. Cortar; se reintenta en el próximo drain.
+      break
+    }
+  }
+  await queryClient.invalidateQueries()
+}

@@ -6,6 +6,7 @@ import { WalletFormModal, OnboardingModal } from '@/features/wallets'
 import { DebtFormModal, DebtDetailDrawer, useDebtModal } from '@/features/debts'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
+import { OfflineBanner } from './OfflineBanner'
 
 /** Shell de la app: sidebar (md+) o bottom nav + FAB (mobile). */
 export function MainLayout({ children }: { children: ReactNode }) {
@@ -24,11 +25,20 @@ export function MainLayout({ children }: { children: ReactNode }) {
     <div className="flex h-dvh overflow-hidden bg-background text-foreground">
       {isDesktop && <Sidebar />}
 
-      <main className="h-dvh flex-1 overflow-y-auto">
-        <div className={isDesktop ? 'mx-auto max-w-[1400px] p-8' : 'px-4 pb-24 pt-5'}>
-          {children}
-        </div>
-      </main>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <OfflineBanner />
+        <main className="flex-1 overflow-y-auto">
+          <div
+            className={
+              isDesktop
+                ? 'mx-auto max-w-[1400px] p-8'
+                : 'px-4 pb-24 pt-[calc(1.25rem_+_var(--safe-area-inset-top))]'
+            }
+          >
+            {children}
+          </div>
+        </main>
+      </div>
 
       {!isDesktop && <BottomNav />}
 

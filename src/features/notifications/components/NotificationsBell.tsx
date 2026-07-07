@@ -142,7 +142,7 @@ export function NotificationsBell() {
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="max-h-[80dvh] overflow-y-auto rounded-t-2xl px-4 pb-5 pt-5">
+        <SheetContent side="bottom" className="max-h-[80dvh] overflow-y-auto rounded-t-2xl px-4 pt-5 pb-[calc(1.25rem_+_var(--safe-area-inset-bottom))]">
           <SheetTitle className="mb-1 text-lg">Notificaciones</SheetTitle>
           <p className="mb-4 text-sm text-muted-foreground">Lo que necesita tu atención</p>
 

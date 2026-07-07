@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { ChevronRight, LogOut, Moon, Repeat, Server, Sun, Tag, type LucideIcon } from 'lucide-react'
+import { ChevronRight, LogOut, Moon, Repeat, Sun, Tag, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ResponsiveModal } from '@/components/elements/ResponsiveModal'
-import { env, getServerUrl, setServerUrl } from '@/config/env'
+import { ServerUrlSection } from '@/components/elements/ServerUrlSection'
+import { env } from '@/config/env'
 import { useThemeStore } from '@/hooks/useTheme'
 import { useAuthStore } from '@/store/useAuthStore'
+import { useServerReachable } from '@/store/useOnlineStore'
 import { useLogout } from '@/features/auth'
 import { DriveSection } from '@/features/drive'
 import { DelegationsSection } from '@/features/delegations'
@@ -33,40 +34,9 @@ function GestionCard({ to, icon: Icon, title, desc }: { to: string; icon: Lucide
   )
 }
 
-/** Solo en el APK: la URL del backend se configura acá (en web sale del .env). */
-function ServerUrlSection() {
-  const [url, setUrl] = useState(getServerUrl() ?? '')
-  return (
-    <section>
-      <SectionLabel>Servidor</SectionLabel>
-      <div className="rounded-xl border bg-card px-5 py-4">
-        <div className="mb-3 flex items-center gap-2.5">
-          <Server size={16} className="text-muted-foreground" />
-          <div>
-            <div className="text-sm font-medium">URL del servidor</div>
-            <div className="text-xs text-muted-foreground">Ej: http://192.168.0.10:3000 (tu backend en la red)</div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="http://IP-o-dominio:3000"
-            inputMode="url"
-            autoCapitalize="none"
-            autoCorrect="off"
-          />
-          <Button className="h-11" disabled={!url.trim()} onClick={() => setServerUrl(url)}>
-            Guardar
-          </Button>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 export function SettingsPage() {
   const user = useAuthStore((s) => s.user)
+  const online = useServerReachable()
   const [profileOpen, setProfileOpen] = useState(false)
 
   const name = user?.name ?? user?.email?.split('@')[0] ?? 'Usuario'
@@ -111,8 +81,16 @@ export function SettingsPage() {
         {env.isNative && <ServerUrlSection />}
 
         <NotificationsSection />
-        <DriveSection />
-        <DelegationsSection />
+        {online ? (
+          <>
+            <DriveSection />
+            <DelegationsSection />
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Supervisión de cuentas y Google Drive requieren conexión con el servidor.
+          </p>
+        )}
       </div>
 
       <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} name={name} email={user?.email} initial={initial} />

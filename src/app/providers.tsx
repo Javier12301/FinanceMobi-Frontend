@@ -3,6 +3,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { RouterProvider } from '@tanstack/react-router'
 import { Toaster } from '@/components/ui/sonner'
 import { useApplyTheme } from '@/hooks/useTheme'
+import { AppBoot } from './AppBoot'
 import { queryClient } from './queryClient'
 import { router } from './router'
 
@@ -27,7 +28,9 @@ export function App() {
         dehydrateOptions: { shouldDehydrateMutation: () => false },
       }}
     >
-      <RouterProvider router={router} />
+      <AppBoot>
+        <RouterProvider router={router} />
+      </AppBoot>
       <Toaster position="top-right" richColors />
     </PersistQueryClientProvider>
   )
