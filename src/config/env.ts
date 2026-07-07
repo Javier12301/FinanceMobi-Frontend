@@ -42,8 +42,13 @@ export function setServerUrl(url: string): void {
 
 function resolveApiBaseUrl(): string {
   if (Capacitor.isNativePlatform()) {
-    const base = getServerUrl()
-    return base ? `${base}/api` : '' // vacío ⇒ Ajustes pide configurar la URL del servidor
+    let base = getServerUrl()
+    if (!base) return ''
+    // Asegurar que tenga protocolo para evitar que axios lo trate como ruta relativa
+    if (!base.startsWith('http')) {
+      base = `http://${base}`
+    }
+    return `${base}/api`
   }
   if (import.meta.env.MODE === 'lan' || data.VITE_API_BASE_URL === 'auto') {
     return `${window.location.protocol}//${window.location.hostname}:3000/api`

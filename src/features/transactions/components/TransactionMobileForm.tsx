@@ -101,7 +101,7 @@ function SummaryBar({
   const cellClass =
     'flex flex-col gap-0.5 rounded-md bg-background p-2 text-left text-xs transition-colors hover:bg-muted min-h-[50px] [@media(max-height:640px)]:min-h-0 [@media(max-height:640px)]:p-1.5'
   return (
-    <div className="mb-3 grid grid-cols-3 gap-2 rounded-lg border border-border bg-card p-2.5 max-[360px]:grid-cols-2 max-[360px]:gap-1.5 [@media(max-height:640px)]:mb-1.5 [@media(max-height:640px)]:p-1.5 [@media(max-height:640px)]:gap-1">
+    <div className="mb-2 grid grid-cols-3 gap-2 rounded-lg border border-border bg-card p-2.5 max-[360px]:grid-cols-2 max-[360px]:gap-1.5 [@media(max-height:640px)]:mb-1.5 [@media(max-height:640px)]:p-1.5 [@media(max-height:640px)]:gap-1">
       {/* Celda 1: Billetera(s) */}
       <button type="button" onClick={() => onOpen('wallet')} className={cellClass}>
         <span className="font-semibold text-foreground">{type === 'TRANSFER' ? 'Origen' : 'Billetera'}</span>
@@ -368,7 +368,7 @@ export function TransactionMobileForm() {
         {/* ── Zona 1: Header fijo ─────────────────────────────────── */}
         <div className="shrink-0 px-4 pb-2 pt-4 [@media(max-height:640px)]:pt-2 [@media(max-height:640px)]:pb-1">
           {/* Título + cerrar */}
-          <div className="mb-3 flex items-center justify-between [@media(max-height:640px)]:mb-1.5">
+          <div className="mb-2 flex items-center justify-between [@media(max-height:640px)]:mb-1.5">
             <SheetTitle className="text-base font-semibold">
               {isEdit ? 'Editar movimiento' : 'Registrar movimiento'}
             </SheetTitle>
@@ -384,7 +384,7 @@ export function TransactionMobileForm() {
           {/* Tipo (chips) */}
           {!isEdit && (
             <TypeSegment
-              className="mb-3 [@media(max-height:640px)]:mb-1.5"
+              className="mb-2 [@media(max-height:640px)]:mb-1.5"
               options={TYPE_OPTIONS}
               value={type}
               onChange={onChangeType}
@@ -488,7 +488,7 @@ export function TransactionMobileForm() {
           <Numpad value={amount} onChange={setAmount} />
 
           {/* Botón de acción */}
-          <div className="px-3 pb-3 [@media(max-height:640px)]:pb-1.5 [@media(max-height:640px)]:pt-0.5">
+          <div className="px-3 pb-[calc(0.75rem_+_var(--safe-area-inset-bottom))] [@media(max-height:640px)]:pb-[calc(0.375rem_+_var(--safe-area-inset-bottom))] [@media(max-height:640px)]:pt-0.5">
             <Button
               type="button"
               onClick={() => submit()}
@@ -549,7 +549,7 @@ function ContextSheet({
 
   return (
     <Sheet open={field !== null} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-5 pt-5">
+      <SheetContent side="bottom" className="rounded-t-2xl px-4 pt-5 pb-[calc(1.25rem_+_var(--safe-area-inset-bottom))]">
         <SheetTitle className="text-lg">{meta.title}</SheetTitle>
         <p className="mb-4 mt-0.5 text-sm text-muted-foreground">{meta.subtitle}</p>
 

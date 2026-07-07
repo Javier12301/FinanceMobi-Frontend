@@ -26,7 +26,7 @@ export function QuickActionsSheet({ open, onOpenChange }: QuickActionsSheetProps
           <h2 className="text-base font-semibold">¿Qué querés registrar?</h2>
         </SheetHeader>
 
-        <div className="px-4 py-3 space-y-2">
+        <div className="space-y-2 px-4 py-3 pb-[calc(0.75rem_+_var(--safe-area-inset-bottom))]">
           {/* Registrar movimiento */}
           <button
             onClick={() => handleAction(() => openTransaction())}

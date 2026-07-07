@@ -11,6 +11,9 @@ export function useCategories() {
   return useQuery({
     queryKey: categoriesKey(ownerId),
     enabled: !!ownerId,
+    // Lookup estable: evita el refetch en background al abrir el form (re-render/jank).
+    // Las mutaciones ya invalidan la key.
+    staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data } = await api.get<Category[]>('/categories')
       return data

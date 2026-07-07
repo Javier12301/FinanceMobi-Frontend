@@ -28,7 +28,13 @@ export function MainLayout({ children }: { children: ReactNode }) {
       <div className="flex flex-1 flex-col overflow-hidden">
         <OfflineBanner />
         <main className="flex-1 overflow-y-auto">
-          <div className={isDesktop ? 'mx-auto max-w-[1400px] p-8' : 'px-4 pb-24 pt-5'}>
+          <div
+            className={
+              isDesktop
+                ? 'mx-auto max-w-[1400px] p-8'
+                : 'px-4 pb-24 pt-[calc(1.25rem_+_var(--safe-area-inset-top))]'
+            }
+          >
             {children}
           </div>
         </main>

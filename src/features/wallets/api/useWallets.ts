@@ -11,6 +11,8 @@ export function useWallets() {
   return useQuery({
     queryKey: walletsKey(ownerId),
     enabled: !!ownerId,
+    // Lookup estable para el form de movimiento: sin refetch en background al abrir.
+    staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data } = await api.get<Wallet[]>('/wallets')
       return data
