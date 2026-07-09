@@ -21,7 +21,7 @@ export function BottomNav() {
           conserve su alto de 64px por encima de la barra de gestos (si fuera al
           mismo elemento con border-box, el inset comería los 64px y aplastaría todo). */}
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t bg-background pb-[var(--safe-area-inset-bottom)]">
-        <div className="flex h-16">
+        <div className="flex h-[var(--bottom-nav-height)]">
         {/* Primera mitad (2 items a la izquierda) */}
         <div className="flex flex-1">
           {MOBILE_NAV_ITEMS.slice(0, 2).map((item) => (

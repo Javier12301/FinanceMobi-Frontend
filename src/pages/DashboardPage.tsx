@@ -57,7 +57,12 @@ export function DashboardPage() {
 
   const totalBalance = wallets?.reduce((sum, w) => sum + parseDecimal(w.currentBalance), 0) ?? 0
   const { income, expense } = monthTotals(txns ?? [])
-  const recent = (txns ?? []).slice(0, 5)
+  // Ordenar en cliente: el Dashboard usa useTransactions() sin params (modo V3 del backend, sin
+  // garantía de orden). Ordenamos por fecha desc, con createdAt como desempate para el orden real
+  // dentro del mismo día (date puede venir day-only en cargas offline).
+  const recent = [...(txns ?? [])]
+    .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 5)
   const typeName = (id: number) => types?.find((t) => t.id === id)?.name
 
   return (
@@ -115,7 +120,7 @@ export function DashboardPage() {
 
       {/* Métricas */}
       <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <MetricCard label="Balance total" value={formatCurrency(totalBalance)} hint="Suma de todas las billeteras" />
+        <MetricCard label="Balance total" value={walletsLoading && !wallets ? '—' : formatCurrency(totalBalance)} hint="Suma de todas las billeteras" />
         <MetricCard label="Ingresos del mes" value={formatCurrency(income)} valueClassName="text-success" />
         <MetricCard label="Gastos del mes" value={formatCurrency(expense)} valueClassName="text-destructive" />
       </div>

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { env } from '@/config/env'
-import { api, isNotAvailable } from '@/config/api'
+import { api, isApiError, isNotAvailable } from '@/config/api'
 import { useOnlineStore } from '@/store/useOnlineStore'
 import { useOwnerStore } from '@/store/useOwnerStore'
 import { enqueueMutation } from '@/features/offline'
@@ -36,17 +36,30 @@ export function useCreateDebt() {
   const ownerId = useOwnerStore((s) => s.activeOwnerId)
   return useMutation({
     mutationFn: async (input: CreateDebtInput) => {
-      if (env.isNative && useOnlineStore.getState().serverReachable === false) {
-        await enqueueMutation({
-          id: input.id!, ownerId, method: 'post', endpoint: '/debts', body: input,
-        })
+      const enqueue = () =>
+        enqueueMutation({ id: input.id!, ownerId, method: 'post', endpoint: '/debts', body: input })
+      // Lectura síncrona del flag (sin await en el path caliente); si quedó stale, el catch de
+      // status 0 cae al outbox. El listener nativo de AppBoot lo pone en false al desconectarse.
+      const offline = env.isNative && useOnlineStore.getState().serverReachable === false
+      if (offline) {
+        await enqueue()
         return null as unknown as Debt // optimista ya aplicado; el drain lo sube luego
       }
-      const { data } = await api.post<Debt>('/debts', input)
-      return data
+      try {
+        const { data } = await api.post<Debt>('/debts', input)
+        return data
+      } catch (e) {
+        // Red caída que el flag no detectó: caer al outbox en vez de perder la deuda.
+        if (env.isNative && isApiError(e) && e.status === 0) {
+          await enqueue()
+          return null as unknown as Debt
+        }
+        throw e
+      }
     },
     onMutate: async (input: CreateDebtInput) => {
-      await queryClient.cancelQueries({ queryKey: debtsKey(ownerId) })
+      // Sin await: cancelar un refetch pausado offline no resuelve y colgaría el onMutate.
+      void queryClient.cancelQueries({ queryKey: debtsKey(ownerId) })
       // Mismo id para el optimista y el POST (idempotencia del replay offline).
       input.id ??= crypto.randomUUID()
       const now = new Date().toISOString()
@@ -77,7 +90,12 @@ export function useCreateDebt() {
     onError: (_e, _input, ctx) => {
       ctx?.snapshots.forEach(([key, data]) => queryClient.setQueryData(key, data))
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: debtsKey(ownerId) }),
+    // Offline no invalidamos (refetch pausado inútil que traba la próxima alta).
+    onSuccess: () => {
+      if (useOnlineStore.getState().serverReachable !== false) {
+        queryClient.invalidateQueries({ queryKey: debtsKey(ownerId) })
+      }
+    },
   })
 }
 

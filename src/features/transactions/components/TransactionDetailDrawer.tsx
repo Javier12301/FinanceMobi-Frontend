@@ -91,7 +91,7 @@ export function TransactionDetailDrawer() {
         </div>
 
         {!isReadOnly && (
-          <div className="flex flex-col gap-2.5 border-t p-4">
+          <div className="flex flex-col gap-2.5 border-t p-4 pb-[calc(1rem_+_var(--safe-area-inset-bottom))]">
             <Button
               variant="outline"
               className="w-full"

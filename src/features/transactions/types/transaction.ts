@@ -34,6 +34,10 @@ export interface UpdateTransactionInput {
   amount?: number
   description?: string
   date?: string
+  /** Corregir la billetera del movimiento; el backend reconcilia el saldo entre vieja y nueva. */
+  walletId?: string
+  /** Solo TRANSFER: corregir la billetera destino. */
+  destinationWalletId?: string
 }
 
 export interface TransactionFilters {

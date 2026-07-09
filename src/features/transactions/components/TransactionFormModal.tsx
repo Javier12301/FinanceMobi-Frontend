@@ -128,7 +128,17 @@ function TransactionFormDesktop() {
       update.mutate(
         {
           id: editing.id,
-          input: { amount: amountNum, categoryId, description: description || undefined, date: dateInputToIso(date) },
+          original: editing,
+          input: {
+            amount: amountNum,
+            categoryId,
+            description: description || undefined,
+            // Solo mandar date si el día cambió: dateInputToIso estampa la hora ACTUAL, así que
+            // reenviarlo sin cambios pisaría la hora original del movimiento.
+            ...(date !== isoToDateInput(editing.date) ? { date: dateInputToIso(date) } : {}),
+            walletId,
+            ...(isTransfer ? { destinationWalletId } : {}),
+          },
         },
         {
           onSuccess: () => {
@@ -241,7 +251,7 @@ function TransactionFormDesktop() {
         ) : (
           <>
             <Field label="Billetera">
-              <WalletSelect wallets={wallets} value={walletId} onChange={setWalletId} disabled={isEdit} />
+              <WalletSelect wallets={wallets} value={walletId} onChange={setWalletId} />
             </Field>
             <div className="space-y-1.5">
               <Label>Categoría</Label>

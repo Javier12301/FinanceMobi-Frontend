@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils'
 import { TypeSegment, type TypeSegmentOption } from '@/components/elements/TypeSegment'
 import { errorMessage, isNotAvailable } from '@/config/api'
+import { useOnlineStore } from '@/store/useOnlineStore'
 import { useWallets } from '@/features/wallets'
 import {
   CompactCategoryRow,
@@ -269,7 +270,17 @@ export function TransactionMobileForm() {
       update.mutate(
         {
           id: editing.id,
-          input: { amount: amountNum, categoryId, description: description || undefined, date: dateInputToIso(date) },
+          original: editing,
+          input: {
+            amount: amountNum,
+            categoryId,
+            description: description || undefined,
+            // Solo mandar date si el día cambió: dateInputToIso estampa la hora ACTUAL, así que
+            // reenviarlo sin cambios pisaría la hora original del movimiento.
+            ...(date !== isoToDateInput(editing.date) ? { date: dateInputToIso(date) } : {}),
+            walletId,
+            ...(isTransfer ? { destinationWalletId } : {}),
+          },
         },
         {
           onSuccess: () => {
@@ -280,10 +291,9 @@ export function TransactionMobileForm() {
         },
       )
     } else {
-      // Sin red la mutación queda pausada (React Query la reenvía al reconectar). El update
-      // optimista ya muestra el movimiento, así que offline cerramos y avisamos al instante
-      // en vez de esperar al onSuccess (que recién corre al volver la conexión).
-      const offline = !navigator.onLine
+      // Offline: el optimista ya muestra el movimiento, así que cerramos y avisamos al instante.
+      // Usamos el flag confiable (serverReachable), NO navigator.onLine (miente en el WebView Android).
+      const offline = useOnlineStore.getState().serverReachable === false
       create.mutate(
         {
           walletId,
@@ -366,9 +376,9 @@ export function TransactionMobileForm() {
         className={cn('flex h-[96dvh] flex-col gap-0 rounded-t-2xl p-0', FULLSCREEN_SHEET_CLASS)}
       >
         {/* ── Zona 1: Header fijo ─────────────────────────────────── */}
-        <div className="shrink-0 px-4 pb-2 pt-4 [@media(max-height:640px)]:pt-2 [@media(max-height:640px)]:pb-1">
+        <div className="shrink-0 px-4 pb-1.5 pt-3 [@media(max-height:640px)]:pt-2 [@media(max-height:640px)]:pb-1">
           {/* Título + cerrar */}
-          <div className="mb-2 flex items-center justify-between [@media(max-height:640px)]:mb-1.5">
+          <div className="mb-1.5 flex items-center justify-between [@media(max-height:640px)]:mb-1.5">
             <SheetTitle className="text-base font-semibold">
               {isEdit ? 'Editar movimiento' : 'Registrar movimiento'}
             </SheetTitle>
@@ -384,7 +394,7 @@ export function TransactionMobileForm() {
           {/* Tipo (chips) */}
           {!isEdit && (
             <TypeSegment
-              className="mb-2 [@media(max-height:640px)]:mb-1.5"
+              className="mb-1.5 [@media(max-height:640px)]:mb-1.5"
               options={TYPE_OPTIONS}
               value={type}
               onChange={onChangeType}
@@ -404,7 +414,7 @@ export function TransactionMobileForm() {
         </div>
 
         {/* ── Zona 2: Detalles siempre visibles (categoría + nota) ────── */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2 space-y-3 [@media(max-height:640px)]:py-1 [@media(max-height:640px)]:space-y-2">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-1.5 space-y-2.5 [@media(max-height:640px)]:py-1 [@media(max-height:640px)]:space-y-2">
           {/* RecurringBanner en edición */}
           {isEdit && editing?.recurringRuleId && (
             <RecurringBanner ruleId={editing.recurringRuleId} onDone={close} />
@@ -455,7 +465,7 @@ export function TransactionMobileForm() {
         {/* ── Zona 3: Footer fijo (monto + numpad + acción) ───────── */}
         <div className="shrink-0 border-t bg-background">
           {/* Display de monto (protagonista) */}
-          <div className="px-4 py-3 text-center [@media(max-height:640px)]:py-1">
+          <div className="px-4 py-1.5 text-center [@media(max-height:640px)]:py-1">
             <span className="text-xs font-medium text-muted-foreground [@media(max-height:640px)]:text-[10px]">Monto</span>
             <div className={cn('font-bold tracking-tight transition-colors text-4xl sm:text-5xl lg:text-6xl [@media(max-height:640px)]:text-2xl', amountColor)}>
               ${displayAmount}
@@ -463,7 +473,7 @@ export function TransactionMobileForm() {
           </div>
 
           {/* Montos rápidos (aditivos: tocar dos veces $1.000 = $2.000) */}
-          <div className="px-3 py-2 flex gap-1.5 justify-center [@media(max-height:640px)]:gap-1 [@media(max-height:640px)]:px-2 [@media(max-height:640px)]:py-1">
+          <div className="px-3 py-1.5 flex gap-1.5 justify-center [@media(max-height:640px)]:gap-1 [@media(max-height:640px)]:px-2 [@media(max-height:640px)]:py-1">
             {[1000, 5000, 10000].map((sug) => (
               <button
                 key={sug}
@@ -564,8 +574,6 @@ function ContextSheet({
               <WalletList wallets={wallets} value={destinationWalletId} onChange={setDestinationWalletId} exclude={walletId} />
             </div>
           </div>
-        ) : isEdit ? (
-          <p className="text-sm text-muted-foreground">La billetera no se puede cambiar al editar un movimiento.</p>
         ) : (
           <WalletList wallets={wallets} value={walletId} onChange={setWalletId} />
         ))}
