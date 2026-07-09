@@ -4,7 +4,7 @@ export interface Transaction {
   id: string
   walletId: string
   destinationWalletId: string | null
-  categoryId: string
+  categoryId: string | null // null en transferencias (no llevan categoría)
   amount: string // decimal como string
   description: string | null
   date: string // ISO 8601
@@ -21,7 +21,8 @@ export interface CreateTransactionInput {
   /** id generado por el cliente (alta offline): el POST es idempotente ante reintentos del outbox. */
   id?: string
   walletId: string
-  categoryId: string
+  /** Opcional: las transferencias no llevan categoría. */
+  categoryId?: string
   amount: number
   movementType: MovementType
   date: string // ISO 8601
@@ -34,6 +35,10 @@ export interface UpdateTransactionInput {
   amount?: number
   description?: string
   date?: string
+  /** Corregir la billetera del movimiento; el backend reconcilia el saldo entre vieja y nueva. */
+  walletId?: string
+  /** Solo TRANSFER: corregir la billetera destino. */
+  destinationWalletId?: string
 }
 
 export interface TransactionFilters {

@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Network } from '@capacitor/network'
 import { initDb } from '@/config/db'
 import { env } from '@/config/env'
-import { checkServer } from '@/store/useOnlineStore'
+import { checkServer, useOnlineStore } from '@/store/useOnlineStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { drainOutbox } from '@/features/offline'
 import { queryClient } from './queryClient'
@@ -40,11 +40,14 @@ export function AppBoot({ children }: { children: ReactNode }) {
     void boot()
 
     // Re-chequear cuando cambia el estado de red (reconexión).
-    const handle = Network.addListener('networkStatusChange', async () => {
-      const reachable = await checkServer()
-      if (reachable) {
-        void drainOutbox()
+    const handle = Network.addListener('networkStatusChange', async (status) => {
+      // Sin red (evento nativo, confiable): marcar offline al instante, sin esperar el fetch.
+      if (!status.connected) {
+        useOnlineStore.getState().set(false)
+        return
       }
+      const reachable = await checkServer()
+      if (reachable) void drainOutbox()
     })
     return () => { cancelled = true; void handle.then((h: any) => h.remove()) }
   }, [])

@@ -32,7 +32,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
             className={
               isDesktop
                 ? 'mx-auto max-w-[1400px] p-8'
-                : 'px-4 pb-24 pt-[calc(1.25rem_+_var(--safe-area-inset-top))]'
+                : 'px-4 pb-[calc(var(--bottom-nav-height)_+_var(--safe-area-inset-bottom)_+_1.5rem)] pt-[calc(1.25rem_+_var(--safe-area-inset-top))]'
             }
           >
             {children}

@@ -14,6 +14,9 @@ export interface ApiError {
 export const api = axios.create({
   baseURL: env.apiBaseUrl,
   headers: { 'Content-Type': 'application/json' },
+  // Sin timeout, una request offline cuelga para siempre (botón "Guardando..." infinito).
+  // Con timeout, falla como error de red (status 0) y la mutación puede caer al outbox.
+  timeout: 8000,
 })
 
 // ─── Request: inyecta auth + contexto de owner ──────────────────────────────

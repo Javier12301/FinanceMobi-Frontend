@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils'
 import { TypeSegment, type TypeSegmentOption } from '@/components/elements/TypeSegment'
 import { errorMessage, isNotAvailable } from '@/config/api'
+import { useOnlineStore } from '@/store/useOnlineStore'
 import { useWallets } from '@/features/wallets'
 import {
   CompactCategoryRow,
@@ -88,6 +89,7 @@ function SummaryBar({
   date,
   repeat,
   onOpen,
+  onSwap,
 }: {
   type: MovementType
   walletId: string
@@ -96,41 +98,72 @@ function SummaryBar({
   date: string
   repeat: boolean
   onOpen: (field: ContextField) => void
+  onSwap: () => void
 }) {
   // ponytail: celda compacta reutilizable; min-h por altura, no por ancho, para no comer 110px en 320x568
   const cellClass =
     'flex flex-col gap-0.5 rounded-md bg-background p-2 text-left text-xs transition-colors hover:bg-muted min-h-[50px] [@media(max-height:640px)]:min-h-0 [@media(max-height:640px)]:p-1.5'
+  const walletName = (id: string) => wallets?.find((w) => w.id === id)?.name || 'Seleccionar'
+
+  // Transferencia: Origen ⇄ Destino como fila principal, Fecha/Repetir como secundaria.
+  if (type === 'TRANSFER') {
+    const canSwap = !!walletId && !!destinationWalletId
+    return (
+      <div className="mb-2 space-y-2 rounded-lg border border-border bg-card p-2.5 [@media(max-height:640px)]:mb-1.5 [@media(max-height:640px)]:space-y-1.5 [@media(max-height:640px)]:p-1.5">
+        {/* Fila principal: Origen ⇄ Destino */}
+        <div className="flex items-stretch gap-2">
+          <button type="button" onClick={() => onOpen('wallet')} className={cn(cellClass, 'flex-1')}>
+            <span className="font-semibold text-foreground">Origen</span>
+            <span className="text-muted-foreground text-[10px] line-clamp-2">{walletName(walletId)}</span>
+          </button>
+          <button
+            type="button"
+            onClick={onSwap}
+            disabled={!canSwap}
+            aria-label="Intercambiar origen y destino"
+            className="flex h-9 w-9 shrink-0 items-center justify-center self-center rounded-full border border-primary bg-primary-soft text-primary transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ArrowLeftRight size={16} />
+          </button>
+          <button type="button" onClick={() => onOpen('wallet')} className={cn(cellClass, 'flex-1')}>
+            <span className="font-semibold text-foreground">Destino</span>
+            <span className="text-muted-foreground text-[10px] line-clamp-2">{walletName(destinationWalletId)}</span>
+          </button>
+        </div>
+        {/* Fila secundaria: Fecha | Repetir */}
+        <div className="grid grid-cols-2 gap-2 [@media(max-height:640px)]:gap-1">
+          <button type="button" onClick={() => onOpen('date')} className={cellClass}>
+            <span className="font-semibold text-foreground">Fecha</span>
+            <span className="text-muted-foreground text-[10px]">{formatDateShort(date)}</span>
+          </button>
+          <button type="button" onClick={() => onOpen('repeat')} className={cellClass}>
+            <span className="font-semibold text-foreground">Repetir</span>
+            <span className="text-muted-foreground text-[10px]">{formatRepeatShort(repeat)}</span>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Gasto/Ingreso: Billetera | Fecha | Repetir
   return (
     <div className="mb-2 grid grid-cols-3 gap-2 rounded-lg border border-border bg-card p-2.5 max-[360px]:grid-cols-2 max-[360px]:gap-1.5 [@media(max-height:640px)]:mb-1.5 [@media(max-height:640px)]:p-1.5 [@media(max-height:640px)]:gap-1">
-      {/* Celda 1: Billetera(s) */}
       <button type="button" onClick={() => onOpen('wallet')} className={cellClass}>
-        <span className="font-semibold text-foreground">{type === 'TRANSFER' ? 'Origen' : 'Billetera'}</span>
+        <span className="font-semibold text-foreground">Billetera</span>
         <span className="text-muted-foreground text-[10px] line-clamp-2">
           {formatWalletDisplay(type, walletId, destinationWalletId, wallets)}
         </span>
       </button>
 
-      {/* Celda 2: Fecha */}
       <button type="button" onClick={() => onOpen('date')} className={cellClass}>
         <span className="font-semibold text-foreground">Fecha</span>
         <span className="text-muted-foreground text-[10px]">{formatDateShort(date)}</span>
       </button>
 
-      {/* Celda 3: Repetir */}
       <button type="button" onClick={() => onOpen('repeat')} className={cellClass}>
         <span className="font-semibold text-foreground">Repetir</span>
         <span className="text-muted-foreground text-[10px]">{formatRepeatShort(repeat)}</span>
       </button>
-
-      {/* En <360px, fila extra para destino si es transferencia */}
-      {type === 'TRANSFER' && (
-        <button type="button" onClick={() => onOpen('wallet')} className={cn(cellClass, 'col-span-2 max-[360px]:col-span-1')}>
-          <span className="font-semibold text-foreground">Destino</span>
-          <span className="text-muted-foreground text-[10px] line-clamp-2">
-            {wallets?.find((w) => w.id === destinationWalletId)?.name || 'Seleccionar'}
-          </span>
-        </button>
-      )}
     </div>
   )
 }
@@ -211,7 +244,7 @@ export function TransactionMobileForm() {
       setAmount(source.amount)
       setWalletId(source.walletId)
       setDestinationWalletId(source.destinationWalletId ?? '')
-      setCategoryId(source.categoryId)
+      setCategoryId(source.categoryId ?? '')
       setDescription(source.description ?? '')
       setDate(editing ? isoToDateInput(source.date) : todayInput())
     } else {
@@ -269,7 +302,18 @@ export function TransactionMobileForm() {
       update.mutate(
         {
           id: editing.id,
-          input: { amount: amountNum, categoryId, description: description || undefined, date: dateInputToIso(date) },
+          original: editing,
+          input: {
+            amount: amountNum,
+            // Las transferencias no llevan categoría.
+            ...(isTransfer ? {} : { categoryId }),
+            description: description || undefined,
+            // Solo mandar date si el día cambió: dateInputToIso estampa la hora ACTUAL, así que
+            // reenviarlo sin cambios pisaría la hora original del movimiento.
+            ...(date !== isoToDateInput(editing.date) ? { date: dateInputToIso(date) } : {}),
+            walletId,
+            ...(isTransfer ? { destinationWalletId } : {}),
+          },
         },
         {
           onSuccess: () => {
@@ -280,14 +324,13 @@ export function TransactionMobileForm() {
         },
       )
     } else {
-      // Sin red la mutación queda pausada (React Query la reenvía al reconectar). El update
-      // optimista ya muestra el movimiento, así que offline cerramos y avisamos al instante
-      // en vez de esperar al onSuccess (que recién corre al volver la conexión).
-      const offline = !navigator.onLine
+      // Offline: el optimista ya muestra el movimiento, así que cerramos y avisamos al instante.
+      // Usamos el flag confiable (serverReachable), NO navigator.onLine (miente en el WebView Android).
+      const offline = useOnlineStore.getState().serverReachable === false
       create.mutate(
         {
           walletId,
-          categoryId,
+          categoryId: isTransfer ? undefined : categoryId,
           amount: amountNum,
           movementType: type,
           date: dateInputToIso(date),
@@ -366,9 +409,9 @@ export function TransactionMobileForm() {
         className={cn('flex h-[96dvh] flex-col gap-0 rounded-t-2xl p-0', FULLSCREEN_SHEET_CLASS)}
       >
         {/* ── Zona 1: Header fijo ─────────────────────────────────── */}
-        <div className="shrink-0 px-4 pb-2 pt-4 [@media(max-height:640px)]:pt-2 [@media(max-height:640px)]:pb-1">
+        <div className="shrink-0 px-4 pb-1.5 pt-3 [@media(max-height:640px)]:pt-2 [@media(max-height:640px)]:pb-1">
           {/* Título + cerrar */}
-          <div className="mb-2 flex items-center justify-between [@media(max-height:640px)]:mb-1.5">
+          <div className="mb-1.5 flex items-center justify-between [@media(max-height:640px)]:mb-1.5">
             <SheetTitle className="text-base font-semibold">
               {isEdit ? 'Editar movimiento' : 'Registrar movimiento'}
             </SheetTitle>
@@ -384,7 +427,7 @@ export function TransactionMobileForm() {
           {/* Tipo (chips) */}
           {!isEdit && (
             <TypeSegment
-              className="mb-2 [@media(max-height:640px)]:mb-1.5"
+              className="mb-1.5 [@media(max-height:640px)]:mb-1.5"
               options={TYPE_OPTIONS}
               value={type}
               onChange={onChangeType}
@@ -400,11 +443,15 @@ export function TransactionMobileForm() {
             date={date}
             repeat={repeat}
             onOpen={setSheet}
+            onSwap={() => {
+              setWalletId(destinationWalletId)
+              setDestinationWalletId(walletId)
+            }}
           />
         </div>
 
         {/* ── Zona 2: Detalles siempre visibles (categoría + nota) ────── */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2 space-y-3 [@media(max-height:640px)]:py-1 [@media(max-height:640px)]:space-y-2">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-1.5 space-y-2.5 [@media(max-height:640px)]:py-1 [@media(max-height:640px)]:space-y-2">
           {/* RecurringBanner en edición */}
           {isEdit && editing?.recurringRuleId && (
             <RecurringBanner ruleId={editing.recurringRuleId} onDone={close} />
@@ -455,7 +502,7 @@ export function TransactionMobileForm() {
         {/* ── Zona 3: Footer fijo (monto + numpad + acción) ───────── */}
         <div className="shrink-0 border-t bg-background">
           {/* Display de monto (protagonista) */}
-          <div className="px-4 py-3 text-center [@media(max-height:640px)]:py-1">
+          <div className="px-4 py-1.5 text-center [@media(max-height:640px)]:py-1">
             <span className="text-xs font-medium text-muted-foreground [@media(max-height:640px)]:text-[10px]">Monto</span>
             <div className={cn('font-bold tracking-tight transition-colors text-4xl sm:text-5xl lg:text-6xl [@media(max-height:640px)]:text-2xl', amountColor)}>
               ${displayAmount}
@@ -463,7 +510,7 @@ export function TransactionMobileForm() {
           </div>
 
           {/* Montos rápidos (aditivos: tocar dos veces $1.000 = $2.000) */}
-          <div className="px-3 py-2 flex gap-1.5 justify-center [@media(max-height:640px)]:gap-1 [@media(max-height:640px)]:px-2 [@media(max-height:640px)]:py-1">
+          <div className="px-3 py-1.5 flex gap-1.5 justify-center [@media(max-height:640px)]:gap-1 [@media(max-height:640px)]:px-2 [@media(max-height:640px)]:py-1">
             {[1000, 5000, 10000].map((sug) => (
               <button
                 key={sug}
@@ -564,8 +611,6 @@ function ContextSheet({
               <WalletList wallets={wallets} value={destinationWalletId} onChange={setDestinationWalletId} exclude={walletId} />
             </div>
           </div>
-        ) : isEdit ? (
-          <p className="text-sm text-muted-foreground">La billetera no se puede cambiar al editar un movimiento.</p>
         ) : (
           <WalletList wallets={wallets} value={walletId} onChange={setWalletId} />
         ))}

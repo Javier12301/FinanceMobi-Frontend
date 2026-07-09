@@ -3,6 +3,7 @@ import { env } from './env'
 
 const DB_NAME = 'financemobile'
 let conn: SQLiteDBConnection | null = null
+let initPromise: Promise<SQLiteDBConnection> | null = null
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS pending_mutations (
@@ -15,16 +16,29 @@ CREATE TABLE IF NOT EXISTS pending_mutations (
   tries INTEGER NOT NULL DEFAULT 0,
   last_error TEXT
 );
+CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `
+
+/** Abre la DB y crea el esquema. Idempotente con promesa memoizada. */
+export function ensureDb(): Promise<SQLiteDBConnection> {
+  if (initPromise !== null) return initPromise
+
+  initPromise = (async () => {
+    const sqlite = new SQLiteConnection(CapacitorSQLite)
+    conn = await sqlite.createConnection(DB_NAME, false, 'no-encryption', 1, false)
+    await conn.open()
+    await conn.execute(SCHEMA)
+    return conn
+  })()
+
+  return initPromise
+}
 
 /** Abre la DB y crea el esquema. No-op en web (se sigue usando localStorage). */
 export async function initDb(): Promise<void> {
   if (!env.isNative) return
   try {
-    const sqlite = new SQLiteConnection(CapacitorSQLite)
-    conn = await sqlite.createConnection(DB_NAME, false, 'no-encryption', 1, false)
-    await conn.open()
-    await conn.execute(SCHEMA)
+    await ensureDb()
   } catch (e) {
     console.error('SQLite init error (no-blocking):', e)
     // No bloquear el arranque si la DB falla
