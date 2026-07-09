@@ -27,7 +27,7 @@ export function useBudgetProgress(): BudgetProgress[] {
     const now = new Date()
     const spentByCat = new Map<string, number>()
     for (const t of txns ?? []) {
-      if (t.movementType !== 'EXPENSE') continue
+      if (t.movementType !== 'EXPENSE' || !t.categoryId) continue
       const d = new Date(t.date)
       if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) continue
       spentByCat.set(t.categoryId, (spentByCat.get(t.categoryId) ?? 0) + parseDecimal(t.amount))

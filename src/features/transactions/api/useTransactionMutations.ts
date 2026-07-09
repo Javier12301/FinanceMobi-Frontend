@@ -91,7 +91,7 @@ export function useCreateTransaction() {
         id: input.id,
         walletId: input.walletId,
         destinationWalletId: input.destinationWalletId ?? null,
-        categoryId: input.categoryId,
+        categoryId: input.categoryId ?? null,
         amount: String(input.amount),
         description: input.description ?? null,
         date: input.date,

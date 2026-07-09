@@ -68,7 +68,7 @@ export function NotificationsBell() {
     const month = monthKey()
     const spentByCat: Record<string, number> = {}
     for (const t of txns ?? []) {
-      if (t.movementType !== 'EXPENSE') continue
+      if (t.movementType !== 'EXPENSE' || !t.categoryId) continue
       if (!t.date.startsWith(month)) continue
       spentByCat[t.categoryId] = (spentByCat[t.categoryId] ?? 0) + parseDecimal(t.amount)
     }

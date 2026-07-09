@@ -79,7 +79,7 @@ function TransactionFormDesktop() {
       setAmount(source.amount)
       setWalletId(source.walletId)
       setDestinationWalletId(source.destinationWalletId ?? '')
-      setCategoryId(source.categoryId)
+      setCategoryId(source.categoryId ?? '')
       setDescription(source.description ?? '')
       setDate(editing ? isoToDateInput(source.date) : todayInput()) // duplicar => hoy
     } else {
@@ -131,7 +131,8 @@ function TransactionFormDesktop() {
           original: editing,
           input: {
             amount: amountNum,
-            categoryId,
+            // Las transferencias no llevan categoría.
+            ...(isTransfer ? {} : { categoryId }),
             description: description || undefined,
             // Solo mandar date si el día cambió: dateInputToIso estampa la hora ACTUAL, así que
             // reenviarlo sin cambios pisaría la hora original del movimiento.
@@ -152,7 +153,7 @@ function TransactionFormDesktop() {
       create.mutate(
         {
           walletId,
-          categoryId,
+          categoryId: isTransfer ? undefined : categoryId,
           amount: amountNum,
           movementType: type,
           date: dateInputToIso(date),
@@ -240,14 +241,26 @@ function TransactionFormDesktop() {
         </div>
 
         {isTransfer ? (
-          <>
-            <Field label="Desde">
+          <div className="flex items-end gap-2">
+            <Field label="Desde" className="flex-1">
               <WalletSelect wallets={wallets} value={walletId} onChange={setWalletId} />
             </Field>
-            <Field label="Hacia">
+            <button
+              type="button"
+              onClick={() => {
+                setWalletId(destinationWalletId)
+                setDestinationWalletId(walletId)
+              }}
+              disabled={!walletId || !destinationWalletId}
+              aria-label="Intercambiar origen y destino"
+              className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary bg-primary-soft text-primary transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <ArrowLeftRight size={16} />
+            </button>
+            <Field label="Hacia" className="flex-1">
               <WalletSelect wallets={wallets} value={destinationWalletId} onChange={setDestinationWalletId} />
             </Field>
-          </>
+          </div>
         ) : (
           <>
             <Field label="Billetera">
@@ -309,9 +322,9 @@ function TransactionFormDesktop() {
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className="space-y-1.5">
+    <div className={cn('space-y-1.5', className)}>
       <Label>{label}</Label>
       {children}
     </div>

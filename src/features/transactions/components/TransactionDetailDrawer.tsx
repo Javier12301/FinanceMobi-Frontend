@@ -52,7 +52,7 @@ export function TransactionDetailDrawer() {
             onClick: () =>
               create.mutate({
                 walletId: snapshot.walletId,
-                categoryId: snapshot.categoryId,
+                categoryId: snapshot.categoryId ?? undefined,
                 amount: Number(snapshot.amount),
                 movementType: snapshot.movementType,
                 date: snapshot.date,
