@@ -41,7 +41,8 @@ export function TransactionDetailDrawer() {
   const categoryName = categories?.find((c) => c.id === tx.categoryId)?.name ?? '—'
 
   const onDelete = () => {
-    const snapshot = tx // datos para deshacer (recrear)
+    if (tx.movementType === 'ADJUSTMENT') return
+    const snapshot = tx as typeof tx & { movementType: 'INCOME' | 'EXPENSE' | 'TRANSFER' } // datos para deshacer (recrear)
     del.mutate(tx.id, {
       onSuccess: () => {
         close()
@@ -49,7 +50,7 @@ export function TransactionDetailDrawer() {
         toast.success('Movimiento eliminado', {
           action: {
             label: 'Deshacer',
-            onClick: () =>
+            onClick: () => {
               create.mutate({
                 walletId: snapshot.walletId,
                 categoryId: snapshot.categoryId ?? undefined,
@@ -58,7 +59,8 @@ export function TransactionDetailDrawer() {
                 date: snapshot.date,
                 description: snapshot.description ?? undefined,
                 destinationWalletId: snapshot.destinationWalletId ?? undefined,
-              }),
+              })
+            },
           },
         })
       },
@@ -87,10 +89,10 @@ export function TransactionDetailDrawer() {
           <DetailRow icon={Calendar} label="Fecha" value={`${formatDate(tx.date)} · ${formatTime(tx.date)}`} />
           <DetailRow icon={FileText} label="Descripción" value={tx.description || '—'} />
 
-          {tx.movementType !== 'TRANSFER' && <AttachmentsPanel transactionId={tx.id} />}
+          {tx.movementType !== 'TRANSFER' && tx.movementType !== 'ADJUSTMENT' && <AttachmentsPanel transactionId={tx.id} />}
         </div>
 
-        {!isReadOnly && (
+        {!isReadOnly && tx.movementType !== 'ADJUSTMENT' && (
           <div className="flex flex-col gap-2.5 border-t p-4 pb-[calc(1rem_+_var(--safe-area-inset-bottom))]">
             <Button
               variant="outline"

@@ -14,6 +14,7 @@ import {
   useDeleteWallet,
   useWalletModal,
   WalletCard,
+  WalletAdjustmentModal,
   type Wallet,
 } from '@/features/wallets'
 
@@ -24,6 +25,7 @@ export function WalletsPage() {
   const openModal = useWalletModal((s) => s.open)
   const isReadOnly = useOwnerStore((s) => s.isReadOnly)
   const [toDelete, setToDelete] = useState<Wallet | null>(null)
+  const [toAdjust, setToAdjust] = useState<Wallet | null>(null)
 
   const typeName = (id: number) => types?.find((t) => t.id === id)?.name
 
@@ -74,6 +76,7 @@ export function WalletsPage() {
               readOnly={isReadOnly}
               onEdit={(wallet) => openModal(wallet)}
               onDelete={setToDelete}
+              onAdjust={setToAdjust}
             />
           ))}
         </div>
@@ -100,6 +103,7 @@ export function WalletsPage() {
         onConfirm={onConfirmDelete}
         loading={del.isPending}
       />
+      <WalletAdjustmentModal wallet={toAdjust} onClose={() => setToAdjust(null)} />
     </div>
   )
 }

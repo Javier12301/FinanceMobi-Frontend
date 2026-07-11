@@ -7,12 +7,11 @@ import { enqueueMutation } from '@/features/offline'
 import { walletsKey } from '@/features/wallets/api/useWallets'
 import type { Wallet } from '@/features/wallets'
 import { parseDecimal } from '@/utils/formatCurrency'
-import type { MovementType } from '@/features/categories'
-import type { CreateTransactionInput, Transaction, UpdateTransactionInput } from '../types/transaction'
+import type { CreateTransactionInput, Transaction, TransactionMovementType, UpdateTransactionInput } from '../types/transaction'
 
 /** Un movimiento como impacto de saldo (lo mínimo para saber cómo mueve las billeteras). */
 interface Impact {
-  movementType: MovementType
+  movementType: TransactionMovementType
   walletId: string
   destinationWalletId?: string | null
   amount: number
