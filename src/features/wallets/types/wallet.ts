@@ -16,6 +16,7 @@ export interface Wallet {
 }
 
 export interface CreateWalletInput {
+  id?: string
   name: string
   typeId: number
   description?: string

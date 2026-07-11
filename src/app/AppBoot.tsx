@@ -6,34 +6,43 @@ import { checkServer, useOnlineStore } from '@/store/useOnlineStore'
 import { useAuthStore } from '@/store/useAuthStore'
 import { drainOutbox } from '@/features/offline'
 import { queryClient } from './queryClient'
+import { flushSqlitePersister } from './sqlitePersister'
 
 /** Splash mínimo mientras corre el primer health-check. */
-function Splash() {
+function Splash({ message }: { message: string }) {
   return (
     <div className="flex h-dvh flex-col items-center justify-center gap-4 bg-background text-foreground">
       <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      <p className="text-sm text-muted-foreground">Sincronizando…</p>
+      <p className="text-center text-sm text-muted-foreground">{message}</p>
     </div>
   )
 }
 
 export function AppBoot({ children }: { children: ReactNode }) {
   const [booted, setBooted] = useState(false)
+  const [message, setMessage] = useState('Preparando datos para usar sin conexión…')
 
   useEffect(() => {
     let cancelled = false
 
     async function boot() {
+      setMessage('Preparando almacenamiento seguro…')
       await initDb() // no-op en web
+      setMessage('Revisando conexión…')
       const reachable = await checkServer()
       if (reachable && useAuthStore.getState().isAuthenticated) {
+        setMessage('Sincronizando cambios pendientes…')
         // Sube el outbox de la sesión y reconcilia con el server (fuente de verdad).
         if (env.isNative) {
           await drainOutbox()
         } else {
           await queryClient.resumePausedMutations()
         }
+        setMessage('Guardando datos para uso sin conexión…')
         await queryClient.invalidateQueries()
+        if (env.isNative) await flushSqlitePersister()
+      } else if (env.isNative) {
+        setMessage('Cargando datos guardados…')
       }
       if (!cancelled) setBooted(true)
     }
@@ -52,6 +61,6 @@ export function AppBoot({ children }: { children: ReactNode }) {
     return () => { cancelled = true; void handle.then((h: any) => h.remove()) }
   }, [])
 
-  if (!booted) return <Splash />
+  if (!booted) return <Splash message={message} />
   return <>{children}</>
 }

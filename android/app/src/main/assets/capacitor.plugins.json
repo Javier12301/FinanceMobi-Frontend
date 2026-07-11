@@ -1,5 +1,13 @@
 [
 	{
+		"pkg": "@capacitor-community/sqlite",
+		"classpath": "com.getcapacitor.community.database.sqlite.CapacitorSQLitePlugin"
+	},
+	{
+		"pkg": "@capacitor/network",
+		"classpath": "com.capacitorjs.plugins.network.NetworkPlugin"
+	},
+	{
 		"pkg": "@capgo/capacitor-social-login",
 		"classpath": "ee.forgr.capacitor.social.login.SocialLoginPlugin"
 	}

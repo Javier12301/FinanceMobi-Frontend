@@ -3,7 +3,7 @@ import { env } from '@/config/env'
 import { api, isApiError } from '@/config/api'
 import { useOnlineStore } from '@/store/useOnlineStore'
 import { useOwnerStore } from '@/store/useOwnerStore'
-import { enqueueMutation } from '@/features/offline'
+import { enqueueMutation, offlineMutationId } from '@/features/offline'
 import { walletsKey } from '@/features/wallets/api/useWallets'
 import type { Wallet } from '@/features/wallets'
 import { parseDecimal } from '@/utils/formatCurrency'
@@ -199,11 +199,26 @@ export function useUpdateTransaction() {
  * Revierte balance y limpia adjuntos en el backend. 409 si tiene adjuntos y Drive no conectado.
  */
 export function useDeleteTransaction() {
+  const queryClient = useQueryClient()
+  const ownerId = useOwnerStore((s) => s.activeOwnerId)
   const invalidate = useInvalidateAfterTxn()
   return useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/transactions/${id}`)
+      const enqueue = () => enqueueMutation({ id: offlineMutationId('transaction', 'delete', id), ownerId, method: 'delete', endpoint: `/transactions/${id}`, body: {} })
+      const offline = env.isNative && useOnlineStore.getState().serverReachable === false
+      if (offline) { await enqueue(); return }
+      try { await api.delete(`/transactions/${id}`) }
+      catch (e) { if (env.isNative && isApiError(e) && e.status === 0) { await enqueue(); return }; throw e }
     },
-    onSuccess: invalidate,
+    onMutate: (id) => {
+      const txSnapshot = queryClient.getQueryData<Transaction[]>(['transactions', ownerId])
+      const walletSnapshot = queryClient.getQueryData<Wallet[]>(walletsKey(ownerId))
+      const deleted = txSnapshot?.find((tx) => tx.id === id)
+      queryClient.setQueryData<Transaction[]>(['transactions', ownerId], (old) => old?.filter((tx) => tx.id !== id))
+      if (deleted) queryClient.setQueryData<Wallet[]>(walletsKey(ownerId), (old) => applyImpact(old, { ...deleted, amount: Number(deleted.amount) }, -1))
+      return { txSnapshot, walletSnapshot }
+    },
+    onError: (_e, _id, ctx) => { queryClient.setQueryData(['transactions', ownerId], ctx?.txSnapshot); queryClient.setQueryData(walletsKey(ownerId), ctx?.walletSnapshot) },
+    onSuccess: () => { if (useOnlineStore.getState().serverReachable !== false) invalidate() },
   })
 }

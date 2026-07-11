@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { env } from '@/config/env'
-import { api, isNotAvailable } from '@/config/api'
+import { api, isApiError, isNotAvailable } from '@/config/api'
 import { useOnlineStore } from '@/store/useOnlineStore'
 import { useOwnerStore } from '@/store/useOwnerStore'
-import { enqueueMutation } from '@/features/offline'
+import { enqueueMutation, offlineMutationId } from '@/features/offline'
 import { walletsKey } from '@/features/wallets/api/useWallets'
 import type {
   CreateRecurringRuleInput,
@@ -76,8 +76,14 @@ export function useCreateRecurringRule() {
         })
         return null as unknown as RecurringRule // optimista ya aplicado; el drain lo sube luego
       }
-      const { data } = await api.post<RecurringRule>('/recurring-rules', input)
-      return data
+      try { return (await api.post<RecurringRule>('/recurring-rules', input)).data }
+      catch (e) {
+        if (env.isNative && isApiError(e) && e.status === 0) {
+          await enqueueMutation({ id: input.id!, ownerId, method: 'post', endpoint: '/recurring-rules', body: input })
+          return null as unknown as RecurringRule
+        }
+        throw e
+      }
     },
     onMutate: async (input: CreateRecurringRuleInput) => {
       await queryClient.cancelQueries({ queryKey: rulesKey(ownerId) })
@@ -119,10 +125,13 @@ export function useCreateRecurringRule() {
 
 export function useUpdateRecurringRule() {
   const invalidate = useInvalidate()
+  const ownerId = useOwnerStore((s) => s.activeOwnerId)
   return useMutation({
     mutationFn: async ({ id, input }: { id: string; input: UpdateRecurringRuleInput }) => {
-      const { data } = await api.put<RecurringRule>(`/recurring-rules/${id}`, input)
-      return data
+      const enqueue = () => enqueueMutation({ id: offlineMutationId('recurring', 'put', id), ownerId, method: 'put', endpoint: `/recurring-rules/${id}`, body: input })
+      if (env.isNative && useOnlineStore.getState().serverReachable === false) { await enqueue(); return null as unknown as RecurringRule }
+      try { return (await api.put<RecurringRule>(`/recurring-rules/${id}`, input)).data }
+      catch (e) { if (env.isNative && isApiError(e) && e.status === 0) { await enqueue(); return null as unknown as RecurringRule }; throw e }
     },
     onSuccess: invalidate,
   })
@@ -130,9 +139,13 @@ export function useUpdateRecurringRule() {
 
 export function useDeleteRecurringRule() {
   const invalidate = useInvalidate()
+  const ownerId = useOwnerStore((s) => s.activeOwnerId)
   return useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/recurring-rules/${id}`)
+      const enqueue = () => enqueueMutation({ id: offlineMutationId('recurring', 'delete', id), ownerId, method: 'delete', endpoint: `/recurring-rules/${id}`, body: {} })
+      if (env.isNative && useOnlineStore.getState().serverReachable === false) { await enqueue(); return }
+      try { await api.delete(`/recurring-rules/${id}`) }
+      catch (e) { if (env.isNative && isApiError(e) && e.status === 0) { await enqueue(); return }; throw e }
     },
     onSuccess: invalidate,
   })
@@ -145,7 +158,10 @@ export function useConfirmRecurring() {
   const ownerId = useOwnerStore((s) => s.activeOwnerId)
   return useMutation({
     mutationFn: async (id: string) => {
-      await api.post(`/recurring-rules/${id}/confirm`)
+      const enqueue = () => enqueueMutation({ id: offlineMutationId('recurring', 'confirm', id), ownerId, method: 'post', endpoint: `/recurring-rules/${id}/confirm`, body: {} })
+      if (env.isNative && useOnlineStore.getState().serverReachable === false) { await enqueue(); return }
+      try { await api.post(`/recurring-rules/${id}/confirm`) }
+      catch (e) { if (env.isNative && isApiError(e) && e.status === 0) { await enqueue(); return }; throw e }
     },
     onSuccess: () => {
       invalidate()

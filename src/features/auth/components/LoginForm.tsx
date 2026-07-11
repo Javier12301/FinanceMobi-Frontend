@@ -5,6 +5,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { errorMessage } from '@/config/api'
+import { env } from '@/config/env'
+import { useServerReachable } from '@/store/useOnlineStore'
 import { useLogin } from '../api/useLogin'
 import { useGoogleLogin } from '../api/useGoogleLogin'
 import { requestGoogleIdToken } from '../api/googleIdentity'
@@ -15,13 +17,22 @@ export function LoginForm() {
   const [showPwd, setShowPwd] = useState(false)
   const login = useLogin()
   const googleLogin = useGoogleLogin()
+  const serverReachable = useServerReachable()
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
+    if (env.isNative && !serverReachable) {
+      toast.error('Sin conexión al servidor. Conectate a Internet y verificá la URL del servidor.')
+      return
+    }
     login.mutate({ email, password }, { onError: (err) => toast.error(errorMessage(err)) })
   }
 
   const onGoogle = async () => {
+    if (env.isNative && !serverReachable) {
+      toast.error('Sin conexión al servidor. Conectate a Internet y verificá la URL del servidor.')
+      return
+    }
     try {
       const idToken = await requestGoogleIdToken()
       googleLogin.mutate({ idToken }, { onError: (err) => toast.error(errorMessage(err)) })

@@ -13,6 +13,7 @@ export interface Category {
 }
 
 export interface CreateCategoryInput {
+  id?: string
   name: string
   movementType: MovementType
   icon?: string

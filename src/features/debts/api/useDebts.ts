@@ -3,7 +3,7 @@ import { env } from '@/config/env'
 import { api, isApiError, isNotAvailable } from '@/config/api'
 import { useOnlineStore } from '@/store/useOnlineStore'
 import { useOwnerStore } from '@/store/useOwnerStore'
-import { enqueueMutation } from '@/features/offline'
+import { enqueueMutation, offlineMutationId } from '@/features/offline'
 import { walletsKey } from '@/features/wallets/api/useWallets'
 import type { Debt, CreateDebtInput, UpdateDebtInput } from '../types/debt'
 
@@ -104,10 +104,19 @@ export function useUpdateDebt() {
   const ownerId = useOwnerStore((s) => s.activeOwnerId)
   return useMutation({
     mutationFn: async ({ id, input }: { id: string; input: UpdateDebtInput }) => {
-      const { data } = await api.put<Debt>(`/debts/${id}`, input)
-      return data
+      const enqueue = () => enqueueMutation({ id: offlineMutationId('debt', 'put', id), ownerId, method: 'put', endpoint: `/debts/${id}`, body: input })
+      const offline = env.isNative && useOnlineStore.getState().serverReachable === false
+      if (offline) { await enqueue(); return null as unknown as Debt }
+      try { return (await api.put<Debt>(`/debts/${id}`, input)).data }
+      catch (e) { if (env.isNative && isApiError(e) && e.status === 0) { await enqueue(); return null as unknown as Debt }; throw e }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: debtsKey(ownerId) }),
+    onMutate: ({ id, input }) => {
+      const snapshot = queryClient.getQueryData<Debt[]>(debtsKey(ownerId))
+      queryClient.setQueryData<Debt[]>(debtsKey(ownerId), (old) => old?.map((debt) => debt.id === id ? { ...debt, ...input, updatedAt: new Date().toISOString() } : debt))
+      return { snapshot }
+    },
+    onError: (_e, _vars, ctx) => queryClient.setQueryData(debtsKey(ownerId), ctx?.snapshot),
+    onSuccess: () => { if (useOnlineStore.getState().serverReachable !== false) queryClient.invalidateQueries({ queryKey: debtsKey(ownerId) }) },
   })
 }
 
@@ -116,9 +125,15 @@ export function useDeleteDebt() {
   const ownerId = useOwnerStore((s) => s.activeOwnerId)
   return useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/debts/${id}`)
+      const enqueue = () => enqueueMutation({ id: offlineMutationId('debt', 'delete', id), ownerId, method: 'delete', endpoint: `/debts/${id}`, body: {} })
+      const offline = env.isNative && useOnlineStore.getState().serverReachable === false
+      if (offline) { await enqueue(); return }
+      try { await api.delete(`/debts/${id}`) }
+      catch (e) { if (env.isNative && isApiError(e) && e.status === 0) { await enqueue(); return }; throw e }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: debtsKey(ownerId) }),
+    onMutate: (id) => { const snapshot = queryClient.getQueryData<Debt[]>(debtsKey(ownerId)); queryClient.setQueryData<Debt[]>(debtsKey(ownerId), (old) => old?.filter((debt) => debt.id !== id)); return { snapshot } },
+    onError: (_e, _id, ctx) => queryClient.setQueryData(debtsKey(ownerId), ctx?.snapshot),
+    onSuccess: () => { if (useOnlineStore.getState().serverReachable !== false) queryClient.invalidateQueries({ queryKey: debtsKey(ownerId) }) },
   })
 }
 
@@ -132,7 +147,12 @@ export function usePayDebt() {
   const ownerId = useOwnerStore((s) => s.activeOwnerId)
   return useMutation({
     mutationFn: async ({ id, walletId, amount, date }: { id: string; walletId: string; amount: number; date?: string }) => {
-      await api.post(`/debts/${id}/pay`, { walletId, amount, date })
+      const body = { id: crypto.randomUUID(), walletId, amount, date }
+      const enqueue = () => enqueueMutation({ id: offlineMutationId('debt', 'pay', body.id), ownerId, method: 'post', endpoint: `/debts/${id}/pay`, body })
+      const offline = env.isNative && useOnlineStore.getState().serverReachable === false
+      if (offline) { await enqueue(); return }
+      try { await api.post(`/debts/${id}/pay`, body) }
+      catch (e) { if (env.isNative && isApiError(e) && e.status === 0) { await enqueue(); return }; throw e }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: debtsKey(ownerId) })

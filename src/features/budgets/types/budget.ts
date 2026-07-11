@@ -11,6 +11,7 @@ export interface Budget {
 }
 
 export interface CreateBudgetInput {
+  id?: string
   categoryId: string
   month: string
   limit: number

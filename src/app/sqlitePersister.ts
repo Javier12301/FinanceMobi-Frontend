@@ -24,6 +24,15 @@ async function flush() {
   }
 }
 
+/** Fuerza la persistencia del último cliente pendiente durante el arranque nativo. */
+export async function flushSqlitePersister(): Promise<void> {
+  if (timer !== null) {
+    clearTimeout(timer)
+    timer = null
+  }
+  await flush()
+}
+
 export const sqlitePersister: Persister = {
   persistClient: async (client) => {
     pending = client

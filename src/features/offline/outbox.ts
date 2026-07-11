@@ -12,6 +12,11 @@ interface OutboxRow {
   body_json: string
 }
 
+/** Evita colisiones entre operaciones distintas sobre el mismo recurso. */
+export function offlineMutationId(resource: string, operation: string, id: string = crypto.randomUUID()): string {
+  return `${resource}:${operation}:${id}`
+}
+
 export async function enqueueMutation(m: {
   id: string
   ownerId: string | null
@@ -42,6 +47,11 @@ export async function drainOutbox(): Promise<void> {
       await api.request({ method: row.method, url: row.endpoint, data: JSON.parse(row.body_json) })
       await getDb().run(`DELETE FROM pending_mutations WHERE id = ?`, [row.id])
     } catch (e) {
+      // DELETE es idempotente: un 404 indica que otra sesión ya alcanzó el estado deseado.
+      if (row.method.toLowerCase() === 'delete' && isApiError(e) && e.status === 404) {
+        await getDb().run(`DELETE FROM pending_mutations WHERE id = ?`, [row.id])
+        continue
+      }
       if (isApiError(e) && e.status >= 400 && e.status < 500) {
         // 4xx: no reintentable (validación/duplicado ya aplicado). Marcar y seguir con la cola.
         await getDb().run(`UPDATE pending_mutations SET tries = tries + 1, last_error = ? WHERE id = ?`, [e.message, row.id])
