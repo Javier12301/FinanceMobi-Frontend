@@ -1,1 +1,1 @@
-export { enqueueMutation, drainOutbox } from './outbox'
+export { clearOutboxForOwner, enqueueMutation, drainOutbox } from './outbox'

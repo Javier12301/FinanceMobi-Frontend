@@ -2,9 +2,11 @@ import { getDb } from '@/config/db'
 import { env } from '@/config/env'
 import { api, isApiError } from '@/config/api'
 import { queryClient } from '@/app/queryClient'
+import { useOwnerStore } from '@/store/useOwnerStore'
 
 interface OutboxRow {
   id: string
+  owner_id: string | null
   method: string
   endpoint: string
   body_json: string
@@ -28,8 +30,11 @@ export async function enqueueMutation(m: {
 /** Reenvía el outbox en orden FIFO. Idempotente en el server (mismo id → no duplica). */
 export async function drainOutbox(): Promise<void> {
   if (!env.isNative) return
+  const ownerId = useOwnerStore.getState().activeOwnerId
+  if (!ownerId) return
   const res = await getDb().query(
-    `SELECT id, method, endpoint, body_json FROM pending_mutations ORDER BY created_at ASC`,
+    `SELECT id, owner_id, method, endpoint, body_json FROM pending_mutations
+     WHERE owner_id = ? ORDER BY created_at ASC`, [ownerId],
   )
   const rows = (res.values ?? []) as OutboxRow[]
   for (const row of rows) {
@@ -47,4 +52,10 @@ export async function drainOutbox(): Promise<void> {
     }
   }
   await queryClient.invalidateQueries()
+}
+
+/** Descarta operaciones locales de una cuenta que acaba de reiniciar sus datos contables. */
+export async function clearOutboxForOwner(ownerId: string): Promise<void> {
+  if (!env.isNative) return
+  await getDb().run('DELETE FROM pending_mutations WHERE owner_id = ?', [ownerId])
 }

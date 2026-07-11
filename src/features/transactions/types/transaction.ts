@@ -1,5 +1,8 @@
 import type { MovementType } from '@/features/categories'
 
+/** ADJUSTMENT solo llega desde el servidor; nunca se ofrece en formularios manuales. */
+export type TransactionMovementType = MovementType | 'ADJUSTMENT'
+
 export interface Transaction {
   id: string
   walletId: string
@@ -8,7 +11,7 @@ export interface Transaction {
   amount: string // decimal como string
   description: string | null
   date: string // ISO 8601
-  movementType: MovementType
+  movementType: TransactionMovementType
   /** Presente si la transacción provino de un pago de deuda (cuota). */
   debtId?: string | null
   /** Presente si la transacción la generó una regla recurrente (cobro automático). */

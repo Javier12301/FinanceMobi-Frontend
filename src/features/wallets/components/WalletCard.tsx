@@ -1,4 +1,4 @@
-import { MoreVertical, Pencil, Trash2 } from 'lucide-react'
+import { MoreVertical, Pencil, SlidersHorizontal, Trash2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,9 +16,10 @@ interface WalletCardProps {
   readOnly?: boolean
   onEdit: (wallet: Wallet) => void
   onDelete: (wallet: Wallet) => void
+  onAdjust: (wallet: Wallet) => void
 }
 
-export function WalletCard({ wallet, typeName, readOnly, onEdit, onDelete }: WalletCardProps) {
+export function WalletCard({ wallet, typeName, readOnly, onEdit, onDelete, onAdjust }: WalletCardProps) {
   const meta = walletTypeMeta(typeName)
 
   return (
@@ -40,6 +41,9 @@ export function WalletCard({ wallet, typeName, readOnly, onEdit, onDelete }: Wal
               <MoreVertical size={16} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onAdjust(wallet)}>
+                <SlidersHorizontal size={14} /> Ajustar saldo
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onEdit(wallet)}>
                 <Pencil size={14} /> Editar
               </DropdownMenuItem>

@@ -75,7 +75,7 @@ function TransactionFormDesktop() {
     const source = editing ?? duplicateFrom
     if (source) {
       const t = source.movementType
-      setType(t)
+      if (t !== 'ADJUSTMENT') setType(t)
       setAmount(source.amount)
       setWalletId(source.walletId)
       setDestinationWalletId(source.destinationWalletId ?? '')
