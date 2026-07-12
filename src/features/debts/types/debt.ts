@@ -1,7 +1,7 @@
 /**
  * Deuda / préstamo (V4). Modela tanto lo que el owner DEBE (préstamo de banco, "le debo a Juan")
  * como lo que le DEBEN / prestó (cobros pendientes). Las cuotas se materializan vía una RecurringRule.
- * Ver contrato esperado en docs/para-backend/frontend-pendientes-v4.md §"Deudas y préstamos".
+ * Ver contrato vigente en ../../../../docs/03-arquitectura/api-y-contrato.md.
  */
 export type DebtDirection = 'I_OWE' | 'OWED_TO_ME'
 export type DebtStatus = 'ACTIVE' | 'PAID'

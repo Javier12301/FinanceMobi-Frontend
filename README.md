@@ -5,7 +5,7 @@ SPA mobile-first de gestión de finanzas personales. **Vite + React + TypeScript
 ## Requisitos
 
 - Node.js 20+
-- Backend de FinanceMobile corriendo (ver `docs/contrato-frontend-v1.md`). En dev: `http://localhost:3000`.
+- Backend de FinanceMobile corriendo (ver ../docs/03-arquitectura/api-y-contrato.md). En dev: http://localhost:3000.
 
 ## Puesta en marcha
 

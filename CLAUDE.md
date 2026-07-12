@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Qué es esto
 
-Frontend de **FinanceMobile**: SPA mobile-first de finanzas personales (billeteras, movimientos, delegación de cuentas, adjuntos en Google Drive del propio usuario). Vite + React 19 + TypeScript. El backend es un proyecto aparte; este repo solo consume su API REST (ver `docs/contrato-frontend-v1.md`).
+Frontend de **FinanceMobile**: SPA mobile-first de finanzas personales (billeteras, movimientos, delegación de cuentas, adjuntos en Google Drive del propio usuario). Vite + React 19 + TypeScript. El backend es un proyecto aparte; este repo consume su API REST documentada en ../docs/03-arquitectura/api-y-contrato.md.
 
 Responder al usuario en **español**.
 
@@ -45,16 +45,16 @@ Normaliza errores a `ApiError {status, message, notImplemented}`; `401` limpia s
 - **Decimales llegan como string** (`"1500.00"`). Usar `parseDecimal`/`formatCurrency` de `src/utils/`, nunca `Number()` directo para mostrar dinero.
 - **Endpoints stub 501**: borrar transacción, subir/borrar adjuntos. La UI los llama y maneja el `501` como "no disponible". No los rompas "arreglándolos".
 - **Endpoints cableados pero inexistentes en v1**: Registro y Delegaciones. Fallan con error controlado hasta que el backend los publique.
-- Si una feature nueva necesita algo del backend que no existe, **documentar el contrato esperado en `docs/`** (seguir el formato de `docs/backend-pendientes-ui-v1.md`) — no inventar/mockear silenciosamente.
+- Si una feature nueva necesita algo del backend que no existe, documentar el contrato esperado en ../docs/ — no inventar/mockear silenciosamente.
 
-Documentos de referencia: `docs/contrato-frontend-v1.md` (API actual), `docs/backend-pendientes-ui-v1.md` (lo que falta del backend), `docs/mejoras-ux-y-roadmap.md` (roadmap UX/funcionalidades).
+Documentos de referencia: ../docs/03-arquitectura/api-y-contrato.md (API actual), ../docs/README.md (índice) y las funcionalidades aplicables bajo ../docs/02-funcionalidades/.
 
 ## Cómo trabajar mejoras de UI/UX y funcionalidades
 
-El norte del producto es **bajar la fricción de cargar movimientos** (la app muere sin datos). Antes de proponer features, leer `docs/mejoras-ux-y-roadmap.md`. Toda mejora se evalúa contra: ¿hace más rápido/cómodo registrar un gasto?
+El norte del producto es **bajar la fricción de cargar movimientos** (la app muere sin datos). Antes de proponer features, leer ../docs/01-producto/vision-y-alcance.md. Toda mejora se evalúa contra: ¿hace más rápido/cómodo registrar un gasto?
 
 **Documentarse antes de aplicar/recomendar librerías:** usar **context7** (`resolve-library-id` → `query-docs`) para TanStack Router/Query, shadcn, Tailwind v4, etc. Las versiones se mueven; no asumir de memoria.
 
-## Orquestación de implementaciones (subagentes)
+## Documentación vigente
 
-Este proyecto implementa cambios con subagentes Haiku dirigidos por un orquestador Sonnet/Opus. **El detalle de roles, skills recomendadas y cómo armar el prompt vive en `docs/orquestacion-subagentes.md` y es solo para el orquestador** — no se le indica a un subagente que lea ese documento ni este `CLAUDE.md` completo; recibe únicamente el extracto de convención/arquitectura que le toca.
+La documentación de producto y contratos vive en ../docs/. Revisar ../docs/README.md antes de cambios que afecten comportamiento, contratos o arquitectura.
