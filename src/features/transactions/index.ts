@@ -13,6 +13,7 @@ export {
 export { useTransactionModal } from './useTransactionModal'
 export { useTransactionDrawer } from './useTransactionDrawer'
 export { movementMeta } from './movementMeta'
+export { isDateBeforeWalletStart } from './dateGuard'
 export { TransactionRow } from './components/TransactionRow'
 export { TransactionFormModal } from './components/TransactionFormModal'
 export { TransactionDetailDrawer } from './components/TransactionDetailDrawer'

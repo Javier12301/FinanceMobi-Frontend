@@ -146,9 +146,14 @@ export function WalletFormModal() {
               className="pl-7"
             />
           </div>
-          {isEdit && (
+          {isEdit ? (
             <p className="text-xs text-muted-foreground">
               Si te equivocaste al cargarlo, corregilo acá. El saldo actual se ajusta por la misma diferencia.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Es el dinero que tenés ahora en esta billetera. No cargues después gastos anteriores:
+              ya están descontados en este saldo.
             </p>
           )}
         </div>

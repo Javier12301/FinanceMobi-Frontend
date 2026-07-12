@@ -26,6 +26,7 @@ import { dateInputToIso, isoToDateInput, dateToInput } from '@/utils/formatDate'
 import { useTransactionModal } from '../useTransactionModal'
 import { useCreateTransaction, useUpdateTransaction } from '../api/useTransactionMutations'
 import { getLastUsed, setLastUsed } from '../lastUsed'
+import { isDateBeforeWalletStart } from '../dateGuard'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
 import { TransactionMobileForm } from './TransactionMobileForm'
 
@@ -287,6 +288,12 @@ function TransactionFormDesktop() {
             <DateChip label="Ayer" active={date === yesterdayInput()} onClick={() => setDate(yesterdayInput())} />
             <Input id="t-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="flex-1" />
           </div>
+          {isDateBeforeWalletStart(date, wallets?.find((w) => w.id === walletId)) && (
+            <p className="text-xs text-muted-foreground">
+              ⚠ Esta fecha es anterior a la creación de la billetera. Si ya pusiste un saldo inicial,
+              no hace falta cargar gastos anteriores: ya están incluidos.
+            </p>
+          )}
         </div>
 
         {/* Repetir cada mes (solo en alta) */}

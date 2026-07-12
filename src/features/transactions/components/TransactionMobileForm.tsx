@@ -24,6 +24,7 @@ import { dateInputToIso, isoToDateInput, dateToInput } from '@/utils/formatDate'
 import { useTransactionModal } from '../useTransactionModal'
 import { useCreateTransaction, useUpdateTransaction, useDeleteTransaction } from '../api/useTransactionMutations'
 import { getLastUsed, setLastUsed } from '../lastUsed'
+import { isDateBeforeWalletStart } from '../dateGuard'
 
 const TYPE_OPTIONS: TypeSegmentOption<MovementType>[] = [
   { value: 'EXPENSE', label: 'Gasto', icon: ArrowDownLeft, activeClass: 'border-destructive bg-destructive/10 text-destructive' },
@@ -452,6 +453,12 @@ export function TransactionMobileForm() {
 
         {/* ── Zona 2: Detalles siempre visibles (categoría + nota) ────── */}
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-1.5 space-y-2.5 [@media(max-height:640px)]:py-1 [@media(max-height:640px)]:space-y-2">
+          {isDateBeforeWalletStart(date, wallets?.find((w) => w.id === walletId)) && (
+            <div className="rounded-lg bg-surface px-3 py-2 text-xs text-muted-foreground">
+              ⚠ Fecha anterior a la creación de la billetera. Si ya cargaste un saldo inicial, los
+              gastos anteriores ya están incluidos — no hace falta cargarlos.
+            </div>
+          )}
           {/* RecurringBanner en edición */}
           {isEdit && editing?.recurringRuleId && (
             <RecurringBanner ruleId={editing.recurringRuleId} onDone={close} />
