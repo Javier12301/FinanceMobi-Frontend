@@ -73,7 +73,7 @@ export function CategoryPicker({ movementType, value, onChange }: CategoryPicker
       )}
 
       {/* Grilla de categorías */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
         {displayedCategories.map((c) => {
           const meta = categoryMeta(c)
           const selected = c.id === value
@@ -83,7 +83,7 @@ export function CategoryPicker({ movementType, value, onChange }: CategoryPicker
               type="button"
               onClick={() => onChange(c.id)}
               className={cn(
-                'flex flex-col items-center gap-1 rounded-xl border p-2 text-[11px] font-medium transition-colors',
+                'flex min-w-0 flex-col items-center gap-1 rounded-xl border p-2 text-[11px] font-medium transition-colors',
                 selected ? 'border-primary bg-primary-soft' : 'border-border',
               )}
             >

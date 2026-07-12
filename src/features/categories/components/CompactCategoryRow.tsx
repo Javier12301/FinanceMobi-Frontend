@@ -62,7 +62,10 @@ export function CompactCategoryRow({ movementType, value, onChange }: CompactCat
       </div>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="max-h-[80dvh] overflow-y-auto rounded-t-2xl">
+        <SheetContent
+          side="bottom"
+          className="max-h-[80dvh] overflow-y-auto overflow-x-hidden rounded-t-2xl px-4 pb-6"
+        >
           <SheetTitle className="mb-3">Elegí una categoría</SheetTitle>
           <CategoryPicker
             movementType={movementType}
