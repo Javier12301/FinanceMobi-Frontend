@@ -10,3 +10,15 @@ export function isDateBeforeWalletStart(
   if (!wallet || !dateInput) return false
   return dateInput < wallet.createdAt.slice(0, 10)
 }
+
+/**
+ * True si la fecha (ISO) cae en un día POSTERIOR a hoy: el backend la crearía como PENDING
+ * (gasto futuro, no afecta el saldo). Espeja `startOfTomorrow()` del backend para que el
+ * optimista offline muestre lo mismo que va a devolver el server.
+ */
+export function isFutureDate(iso: string): boolean {
+  const startOfTomorrow = new Date()
+  startOfTomorrow.setHours(0, 0, 0, 0)
+  startOfTomorrow.setDate(startOfTomorrow.getDate() + 1)
+  return new Date(iso) >= startOfTomorrow
+}

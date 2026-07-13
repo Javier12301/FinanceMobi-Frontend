@@ -6,6 +6,7 @@ import { useOwnerStore } from '@/store/useOwnerStore'
 import { enqueueMutation, offlineMutationId } from '@/features/offline'
 import { walletsKey } from './useWallets'
 import type { Wallet } from '../types/wallet'
+import { uuid } from '@/utils/uuid'
 
 export interface WalletAdjustmentInput {
   id: string
@@ -19,7 +20,7 @@ export function useWalletAdjustment() {
   const ownerId = useOwnerStore((s) => s.activeOwnerId)
   return useMutation({
     mutationFn: async ({ id, ...input }: WalletAdjustmentInput) => {
-      const body = { ...input, id: crypto.randomUUID() }
+      const body = { ...input, id: uuid() }
       const enqueue = () => enqueueMutation({ id: offlineMutationId('wallet', 'adjustment', body.id), ownerId, method: 'post', endpoint: `/wallets/${id}/adjustments`, body })
       if (env.isNative && useOnlineStore.getState().serverReachable === false) { await enqueue(); return null }
       try { return (await api.post(`/wallets/${id}/adjustments`, body)).data }

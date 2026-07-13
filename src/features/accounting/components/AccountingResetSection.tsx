@@ -9,6 +9,7 @@ import { clearOutboxForOwner } from '@/features/offline'
 import { useOwnerStore } from '@/store/useOwnerStore'
 import { useWalletModal, useWallets } from '@/features/wallets'
 import { PostResetWalletSetup } from '@/features/wallets/components/PostResetWalletSetup'
+import { uuid } from '@/utils/uuid'
 
 type WalletStrategy = 'KEEP' | 'DELETE'
 
@@ -23,7 +24,7 @@ export function AccountingResetSection() {
   const [setupWallets, setSetupWallets] = useState<null | typeof wallets>(null)
   const reset = useMutation({
     mutationFn: async (walletStrategy: WalletStrategy) => {
-      const { data } = await api.post('/accounting/reset', { walletStrategy, requestId: crypto.randomUUID() })
+      const { data } = await api.post('/accounting/reset', { walletStrategy, requestId: uuid() })
       return data
     },
     onSuccess: async (_result, walletStrategy) => {

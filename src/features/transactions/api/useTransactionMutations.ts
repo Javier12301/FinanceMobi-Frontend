@@ -7,7 +7,16 @@ import { enqueueMutation, offlineMutationId } from '@/features/offline'
 import { walletsKey } from '@/features/wallets/api/useWallets'
 import type { Wallet } from '@/features/wallets'
 import { parseDecimal } from '@/utils/formatCurrency'
-import type { CreateTransactionInput, Transaction, TransactionMovementType, UpdateTransactionInput } from '../types/transaction'
+import { uuid } from '@/utils/uuid'
+import { isFutureDate } from '../dateGuard'
+import type {
+  CreateTransactionInput,
+  Transaction,
+  TransactionFilters,
+  TransactionMovementType,
+  TransactionStatus,
+  UpdateTransactionInput,
+} from '../types/transaction'
 
 /** Un movimiento como impacto de saldo (lo mínimo para saber cómo mueve las billeteras). */
 interface Impact {
@@ -84,8 +93,11 @@ export function useCreateTransaction() {
       // (botón "Guardando..." infinito en la 2ª alta offline en adelante).
       void queryClient.cancelQueries({ queryKey: ['transactions', ownerId] })
       // Mismo id para el optimista y el POST (idempotencia del replay offline).
-      input.id ??= crypto.randomUUID()
+      input.id ??= uuid()
       const now = new Date().toISOString()
+      // Un gasto con fecha futura nace PENDING también en el optimista: así offline se ve igual
+      // que lo que va a devolver el server (no descuenta saldo, va a "Próximos").
+      const status: TransactionStatus = isFutureDate(input.date) ? 'PENDING' : 'POSTED'
       const optimistic: Transaction = {
         id: input.id,
         walletId: input.walletId,
@@ -95,18 +107,27 @@ export function useCreateTransaction() {
         description: input.description ?? null,
         date: input.date,
         movementType: input.movementType,
+        status,
         createdAt: now,
         updatedAt: now,
       }
       const snapshots = queryClient.getQueriesData<Transaction[]>({ queryKey: ['transactions', ownerId] })
-      queryClient.setQueriesData<Transaction[]>({ queryKey: ['transactions', ownerId] }, (old) =>
-        old ? [optimistic, ...old] : old,
-      )
-      // Ajuste optimista del saldo de billeteras (de acá sale el balance total).
+      // Insertar SOLO en las listas que piden ese status: sin esto, un gasto futuro aparecería
+      // también en "Últimas transacciones" y uno normal en "Próximos".
+      snapshots.forEach(([key, data]) => {
+        if (!data) return
+        const listStatus = ((key[2] as TransactionFilters | undefined)?.status ?? 'POSTED') as TransactionStatus
+        if (listStatus !== status) return
+        queryClient.setQueryData<Transaction[]>(key, [optimistic, ...data])
+      })
+      // Ajuste optimista del saldo (de acá sale el balance total). Un PENDING todavía no gastó
+      // nada: no se toca el saldo hasta que el backend lo postee.
       const walletSnapshots = queryClient.getQueriesData<Wallet[]>({ queryKey: walletsKey(ownerId) })
-      queryClient.setQueriesData<Wallet[]>({ queryKey: walletsKey(ownerId) }, (old) =>
-        applyImpact(old, input, 1),
-      )
+      if (status === 'POSTED') {
+        queryClient.setQueriesData<Wallet[]>({ queryKey: walletsKey(ownerId) }, (old) =>
+          applyImpact(old, input, 1),
+        )
+      }
       return { snapshots, walletSnapshots }
     },
     onError: (_e, _input, ctx) => {
@@ -178,13 +199,67 @@ export function useUpdateTransaction() {
         destinationWalletId: input.destinationWalletId ?? original.destinationWalletId,
         amount: input.amount ?? Number(original.amount),
       }
-      queryClient.setQueriesData<Wallet[]>({ queryKey: walletsKey(ownerId) }, (old) => {
-        const reverted = applyImpact(old, { ...original, amount: Number(original.amount) }, -1)
-        return applyImpact(reverted, newImpact, 1)
-      })
+      // Un PENDING nunca aplicó saldo: editarlo (incluida su fecha) no mueve nada. Si al editar
+      // pasó a estar vencido, el backend lo postea en el próximo GET y el invalidate lo refleja.
+      if (original.status === 'POSTED') {
+        queryClient.setQueriesData<Wallet[]>({ queryKey: walletsKey(ownerId) }, (old) => {
+          const reverted = applyImpact(old, { ...original, amount: Number(original.amount) }, -1)
+          return applyImpact(reverted, newImpact, 1)
+        })
+      }
       return { snapshots, walletSnapshots }
     },
     onError: (_e, _vars, ctx) => {
+      ctx?.snapshots.forEach(([key, data]) => queryClient.setQueryData(key, data))
+      ctx?.walletSnapshots.forEach(([key, data]) => queryClient.setQueryData(key, data))
+    },
+    onSuccess: () => {
+      if (useOnlineStore.getState().serverReachable !== false) invalidate()
+    },
+  })
+}
+
+/**
+ * POST /api/transactions/:id/post — "ya se me descontó".
+ * Postea un movimiento futuro sin esperar a su fecha (y sin que el usuario tenga que editarla):
+ * aplica el saldo y le estampa la fecha de hoy. Optimista: sale de "Próximos" y el saldo se mueve.
+ */
+export function usePostTransactionNow() {
+  const queryClient = useQueryClient()
+  const ownerId = useOwnerStore((s) => s.activeOwnerId)
+  const invalidate = useInvalidateAfterTxn()
+  return useMutation({
+    mutationFn: async (tx: Transaction) => {
+      const enqueue = () =>
+        enqueueMutation({
+          id: offlineMutationId('transaction', 'post', tx.id),
+          ownerId,
+          method: 'post',
+          endpoint: `/transactions/${tx.id}/post`,
+          body: {},
+        })
+      const offline = env.isNative && useOnlineStore.getState().serverReachable === false
+      if (offline) { await enqueue(); return }
+      try { await api.post(`/transactions/${tx.id}/post`) }
+      catch (e) { if (env.isNative && isApiError(e) && e.status === 0) { await enqueue(); return }; throw e }
+    },
+    onMutate: (tx: Transaction) => {
+      const snapshots = queryClient.getQueriesData<Transaction[]>({ queryKey: ['transactions', ownerId] })
+      const walletSnapshots = queryClient.getQueriesData<Wallet[]>({ queryKey: walletsKey(ownerId) })
+      // Sale de la lista de pendientes al instante.
+      snapshots.forEach(([key, data]) => {
+        if (!data) return
+        const listStatus = (key[2] as TransactionFilters | undefined)?.status ?? 'POSTED'
+        if (listStatus !== 'PENDING') return
+        queryClient.setQueryData<Transaction[]>(key, data.filter((t) => t.id !== tx.id))
+      })
+      // Ahora sí impacta el saldo (hasta acá era PENDING y no había descontado nada).
+      queryClient.setQueriesData<Wallet[]>({ queryKey: walletsKey(ownerId) }, (old) =>
+        applyImpact(old, { ...tx, amount: Number(tx.amount) }, 1),
+      )
+      return { snapshots, walletSnapshots }
+    },
+    onError: (_e, _tx, ctx) => {
       ctx?.snapshots.forEach(([key, data]) => queryClient.setQueryData(key, data))
       ctx?.walletSnapshots.forEach(([key, data]) => queryClient.setQueryData(key, data))
     },
@@ -215,7 +290,8 @@ export function useDeleteTransaction() {
       const walletSnapshot = queryClient.getQueryData<Wallet[]>(walletsKey(ownerId))
       const deleted = txSnapshot?.find((tx) => tx.id === id)
       queryClient.setQueryData<Transaction[]>(['transactions', ownerId], (old) => old?.filter((tx) => tx.id !== id))
-      if (deleted) queryClient.setQueryData<Wallet[]>(walletsKey(ownerId), (old) => applyImpact(old, { ...deleted, amount: Number(deleted.amount) }, -1))
+      // Un PENDING no había descontado nada: borrarlo no revierte saldo.
+      if (deleted && deleted.status === 'POSTED') queryClient.setQueryData<Wallet[]>(walletsKey(ownerId), (old) => applyImpact(old, { ...deleted, amount: Number(deleted.amount) }, -1))
       return { txSnapshot, walletSnapshot }
     },
     onError: (_e, _id, ctx) => { queryClient.setQueryData(['transactions', ownerId], ctx?.txSnapshot); queryClient.setQueryData(walletsKey(ownerId), ctx?.walletSnapshot) },

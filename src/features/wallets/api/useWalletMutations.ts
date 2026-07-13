@@ -6,6 +6,7 @@ import { useOwnerStore } from '@/store/useOwnerStore'
 import { enqueueMutation, offlineMutationId } from '@/features/offline'
 import type { CreateWalletInput, UpdateWalletInput, Wallet } from '../types/wallet'
 import { walletsKey } from './useWallets'
+import { uuid } from '@/utils/uuid'
 
 function useWalletContext() {
   const queryClient = useQueryClient()
@@ -30,7 +31,7 @@ export function useCreateWallet() {
       catch (e) { if (env.isNative && isApiError(e) && e.status === 0) { await enqueue(); return null as unknown as Wallet }; throw e }
     },
     onMutate: (input) => {
-      input.id ??= crypto.randomUUID()
+      input.id ??= uuid()
       const snapshot = queryClient.getQueryData<Wallet[]>(walletsKey(ownerId))
       queryClient.setQueryData<Wallet[]>(walletsKey(ownerId), (old) => old ? [optimisticWallet(ownerId!, input), ...old] : old)
       return { snapshot }

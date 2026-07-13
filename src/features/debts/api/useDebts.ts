@@ -6,6 +6,7 @@ import { useOwnerStore } from '@/store/useOwnerStore'
 import { enqueueMutation, offlineMutationId } from '@/features/offline'
 import { walletsKey } from '@/features/wallets/api/useWallets'
 import type { Debt, CreateDebtInput, UpdateDebtInput } from '../types/debt'
+import { uuid } from '@/utils/uuid'
 
 const debtsKey = (ownerId: string | null) => ['debts', ownerId] as const
 
@@ -61,7 +62,7 @@ export function useCreateDebt() {
       // Sin await: cancelar un refetch pausado offline no resuelve y colgaría el onMutate.
       void queryClient.cancelQueries({ queryKey: debtsKey(ownerId) })
       // Mismo id para el optimista y el POST (idempotencia del replay offline).
-      input.id ??= crypto.randomUUID()
+      input.id ??= uuid()
       const now = new Date().toISOString()
       const optimistic: Debt = {
         id: input.id,
@@ -147,7 +148,7 @@ export function usePayDebt() {
   const ownerId = useOwnerStore((s) => s.activeOwnerId)
   return useMutation({
     mutationFn: async ({ id, walletId, amount, date }: { id: string; walletId: string; amount: number; date?: string }) => {
-      const body = { id: crypto.randomUUID(), walletId, amount, date }
+      const body = { id: uuid(), walletId, amount, date }
       const enqueue = () => enqueueMutation({ id: offlineMutationId('debt', 'pay', body.id), ownerId, method: 'post', endpoint: `/debts/${id}/pay`, body })
       const offline = env.isNative && useOnlineStore.getState().serverReachable === false
       if (offline) { await enqueue(); return }

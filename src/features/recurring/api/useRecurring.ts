@@ -5,6 +5,7 @@ import { useOnlineStore } from '@/store/useOnlineStore'
 import { useOwnerStore } from '@/store/useOwnerStore'
 import { enqueueMutation, offlineMutationId } from '@/features/offline'
 import { walletsKey } from '@/features/wallets/api/useWallets'
+import { uuid } from '@/utils/uuid'
 import type {
   CreateRecurringRuleInput,
   RecurringRule,
@@ -88,7 +89,7 @@ export function useCreateRecurringRule() {
     onMutate: async (input: CreateRecurringRuleInput) => {
       await queryClient.cancelQueries({ queryKey: rulesKey(ownerId) })
       // Mismo id para el optimista y el POST (idempotencia del replay offline).
-      input.id ??= crypto.randomUUID()
+      input.id ??= uuid()
       const now = new Date().toISOString()
       const startDate = input.startDate ?? now
       const optimistic: RecurringRule = {

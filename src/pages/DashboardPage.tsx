@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Link } from '@tanstack/react-router'
-import { Plus } from 'lucide-react'
+import { Clock, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { MetricCard } from '@/components/elements/MetricCard'
@@ -11,10 +11,13 @@ import { formatCurrency, parseDecimal } from '@/utils/formatCurrency'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useOwnerStore } from '@/store/useOwnerStore'
 import { useWallets, useWalletTypes, useWalletModal, walletTypeMeta } from '@/features/wallets'
+import { toast } from 'sonner'
+import { errorMessage } from '@/config/api'
 import {
   useTransactions,
   useTransactionDrawer,
   useTransactionModal,
+  usePostTransactionNow,
   TransactionRow,
   type Transaction,
 } from '@/features/transactions'
@@ -26,6 +29,13 @@ import { useStats } from '@/features/auth'
 const SummarySection = lazy(() =>
   import('@/features/summary').then((m) => ({ default: m.SummarySection })),
 )
+
+/** Texto del botón que postea un movimiento futuro sin esperar a su fecha. */
+function alreadyDoneLabel(movementType: Transaction['movementType']) {
+  if (movementType === 'INCOME') return 'Ya lo cobré'
+  if (movementType === 'TRANSFER') return 'Ya la hice'
+  return 'Ya lo pagué'
+}
 
 function monthTotals(txns: Transaction[]) {
   const now = new Date()
@@ -50,6 +60,9 @@ export function DashboardPage() {
   const { data: wallets, isLoading: walletsLoading } = useWallets()
   const { data: types } = useWalletTypes()
   const { data: txns, isLoading: txnsLoading } = useTransactions()
+  // Gastos futuros: el backend los devuelve aparte (no se mezclan con "Últimas").
+  const { data: upcoming } = useTransactions({ status: 'PENDING' })
+  const postNow = usePostTransactionNow()
   const isReadOnly = useOwnerStore((s) => s.isReadOnly)
   const openWalletModal = useWalletModal((s) => s.open)
   const openDrawer = useTransactionDrawer((s) => s.open)
@@ -133,34 +146,85 @@ export function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[60fr_40fr]">
-        {/* Últimas transacciones */}
-        <div className="rounded-xl border bg-card shadow-sm">
-          <div className="flex items-center justify-between border-b px-4 py-3.5">
-            <span className="text-sm font-semibold">Últimas transacciones</span>
-            <Link to="/transactions" className="text-xs font-medium text-primary">
-              Ver todas →
-            </Link>
+        <div className="flex flex-col gap-4">
+          {/* Últimas transacciones */}
+          <div className="rounded-xl border bg-card shadow-sm">
+            <div className="flex items-center justify-between border-b px-4 py-3.5">
+              <span className="text-sm font-semibold">Últimas transacciones</span>
+              <Link to="/transactions" className="text-xs font-medium text-primary">
+                Ver todas →
+              </Link>
+            </div>
+            <div className="px-3">
+              {txnsLoading ? (
+                <div className="space-y-2 py-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 rounded-lg" />
+                  ))}
+                </div>
+              ) : recent.length > 0 ? (
+                recent.map((t) => (
+                  <TransactionRow
+                    key={t.id}
+                    tx={t}
+                    walletName={wallets?.find((w) => w.id === t.walletId)?.name}
+                    onClick={openDrawer}
+                  />
+                ))
+              ) : (
+                <p className="px-1 py-8 text-center text-sm text-muted-foreground">Sin movimientos aún.</p>
+              )}
+            </div>
           </div>
-          <div className="px-3">
-            {txnsLoading ? (
-              <div className="space-y-2 py-3">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12 rounded-lg" />
-                ))}
+
+          {/* Próximos: gastos futuros. Todavía no descontaron plata; se aplican al llegar su fecha.
+              Se oculta si no hay ninguno (ponytail: no ensuciar el home con una tarjeta vacía). */}
+          {upcoming && upcoming.length > 0 && (
+            <div className="rounded-xl border bg-card shadow-sm">
+              <div className="flex items-center gap-2 border-b px-4 py-3.5">
+                <Clock size={15} className="text-muted-foreground" />
+                <span className="text-sm font-semibold">Próximos</span>
+                <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {upcoming.length}
+                </span>
               </div>
-            ) : recent.length > 0 ? (
-              recent.map((t) => (
-                <TransactionRow
-                  key={t.id}
-                  tx={t}
-                  walletName={wallets?.find((w) => w.id === t.walletId)?.name}
-                  onClick={openDrawer}
-                />
-              ))
-            ) : (
-              <p className="px-1 py-8 text-center text-sm text-muted-foreground">Sin movimientos aún.</p>
-            )}
-          </div>
+              <div className="px-3">
+                {[...upcoming]
+                  .sort((a, b) => a.date.localeCompare(b.date))
+                  .map((t) => (
+                    <div key={t.id} className="flex items-center gap-2 border-b last:border-b-0">
+                      <div className="min-w-0 flex-1">
+                        <TransactionRow
+                          tx={t}
+                          walletName={wallets?.find((w) => w.id === t.walletId)?.name}
+                          onClick={openDrawer}
+                        />
+                      </div>
+                      {!isReadOnly && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0 text-xs"
+                          disabled={postNow.isPending}
+                          onClick={() =>
+                            postNow.mutate(t, {
+                              onSuccess: () => toast.success('Registrado. Ya se descontó de tu saldo.'),
+                              onError: (err) => toast.error(errorMessage(err)),
+                            })
+                          }
+                        >
+                          {alreadyDoneLabel(t.movementType)}
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+              </div>
+              <p className="border-t px-4 py-2.5 text-xs text-muted-foreground">
+                Todavía no se descontaron de tu saldo. Se registran solos cuando llega su fecha, o
+                tocá «{alreadyDoneLabel('EXPENSE')}» si ya pasó.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Mis billeteras */}

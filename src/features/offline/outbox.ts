@@ -3,6 +3,7 @@ import { env } from '@/config/env'
 import { api, isApiError } from '@/config/api'
 import { queryClient } from '@/app/queryClient'
 import { useOwnerStore } from '@/store/useOwnerStore'
+import { uuid } from '@/utils/uuid'
 
 interface OutboxRow {
   id: string
@@ -13,7 +14,7 @@ interface OutboxRow {
 }
 
 /** Evita colisiones entre operaciones distintas sobre el mismo recurso. */
-export function offlineMutationId(resource: string, operation: string, id: string = crypto.randomUUID()): string {
+export function offlineMutationId(resource: string, operation: string, id: string = uuid()): string {
   return `${resource}:${operation}:${id}`
 }
 

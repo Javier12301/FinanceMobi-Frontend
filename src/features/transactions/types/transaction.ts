@@ -3,6 +3,13 @@ import type { MovementType } from '@/features/categories'
 /** ADJUSTMENT solo llega desde el servidor; nunca se ofrece en formularios manuales. */
 export type TransactionMovementType = MovementType | 'ADJUSTMENT'
 
+/**
+ * POSTED = ya ocurrió y está aplicado al saldo.
+ * PENDING = gasto futuro: fecha de un día posterior a hoy, todavía NO afecta el saldo.
+ * El backend lo postea solo cuando llega su fecha.
+ */
+export type TransactionStatus = 'POSTED' | 'PENDING'
+
 export interface Transaction {
   id: string
   walletId: string
@@ -12,6 +19,7 @@ export interface Transaction {
   description: string | null
   date: string // ISO 8601
   movementType: TransactionMovementType
+  status: TransactionStatus
   /** Presente si la transacción provino de un pago de deuda (cuota). */
   debtId?: string | null
   /** Presente si la transacción la generó una regla recurrente (cobro automático). */
@@ -50,4 +58,6 @@ export interface TransactionFilters {
   debtId?: string
   dateFrom?: string
   dateTo?: string
+  /** Sin este filtro el backend devuelve solo POSTED. `PENDING` = gastos futuros ("Próximos"). */
+  status?: TransactionStatus
 }

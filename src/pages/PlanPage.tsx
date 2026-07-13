@@ -8,6 +8,7 @@ import { useCategories } from '@/features/categories'
 import { useRecurringRules } from '@/features/recurring'
 import { useTransactionModal } from '@/features/transactions'
 import { useDebts, useDeleteDebt, useDebtModal, type Debt } from '@/features/debts'
+import { SavingsGoalsSection } from '@/features/savings'
 import { toast } from 'sonner'
 import { errorMessage } from '@/config/api'
 import { Trash2 } from 'lucide-react'
@@ -95,6 +96,11 @@ export function PlanPage() {
               tag={r.autoPost ? 'automático' : undefined} />
           ))}
         </Section>
+
+        {/* Objetivos de ahorro (tracker: no mueve plata de las billeteras) */}
+        <div className="lg:col-span-2">
+          <SavingsGoalsSection />
+        </div>
 
         {/* Deudas y préstamos */}
         <div className="lg:col-span-2">

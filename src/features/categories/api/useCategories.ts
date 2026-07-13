@@ -5,6 +5,7 @@ import { useOnlineStore } from '@/store/useOnlineStore'
 import { useOwnerStore } from '@/store/useOwnerStore'
 import { enqueueMutation, offlineMutationId } from '@/features/offline'
 import type { Category, CreateCategoryInput, UpdateCategoryInput } from '../types/category'
+import { uuid } from '@/utils/uuid'
 
 export const categoriesKey = (ownerId: string | null) => ['categories', ownerId] as const
 
@@ -38,7 +39,7 @@ export function useCreateCategory() {
       catch (e) { if (env.isNative && isApiError(e) && e.status === 0) { await enqueue(); return optimisticCategory(ownerId!, input) }; throw e }
     },
     onMutate: (input) => {
-      input.id ??= crypto.randomUUID()
+      input.id ??= uuid()
       const snapshot = queryClient.getQueryData<Category[]>(categoriesKey(ownerId))
       const optimistic = optimisticCategory(ownerId!, input)
       queryClient.setQueryData<Category[]>(categoriesKey(ownerId), (old) => old ? [optimistic, ...old] : old)

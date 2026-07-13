@@ -5,6 +5,7 @@ import { useOnlineStore } from '@/store/useOnlineStore'
 import { useOwnerStore } from '@/store/useOwnerStore'
 import { enqueueMutation, offlineMutationId } from '@/features/offline'
 import type { Budget, CreateBudgetInput, UpdateBudgetInput } from '../types/budget'
+import { uuid } from '@/utils/uuid'
 
 export const budgetsKey = (ownerId: string | null) => ['budgets', ownerId] as const
 export const currentMonth = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` }
@@ -28,7 +29,7 @@ export function useCreateBudget() {
       if (offline()) { await enqueue(); return null as unknown as Budget }
       try { return (await api.post<Budget>('/budgets', input)).data } catch (e) { if (env.isNative && isApiError(e) && e.status === 0) { await enqueue(); return null as unknown as Budget }; throw e }
     },
-    onMutate: (input) => { input.id ??= crypto.randomUUID(); const snapshot = queryClient.getQueryData<Budget[]>(budgetsKey(ownerId)); const now = new Date().toISOString(); queryClient.setQueryData<Budget[]>(budgetsKey(ownerId), (old) => old ? [{ id: input.id!, ownerId: ownerId!, categoryId: input.categoryId, month: input.month, limit: String(input.limit), createdAt: now, updatedAt: now }, ...old] : old); return { snapshot } },
+    onMutate: (input) => { input.id ??= uuid(); const snapshot = queryClient.getQueryData<Budget[]>(budgetsKey(ownerId)); const now = new Date().toISOString(); queryClient.setQueryData<Budget[]>(budgetsKey(ownerId), (old) => old ? [{ id: input.id!, ownerId: ownerId!, categoryId: input.categoryId, month: input.month, limit: String(input.limit), createdAt: now, updatedAt: now }, ...old] : old); return { snapshot } },
     onError: (_e, _input, ctx) => queryClient.setQueryData(budgetsKey(ownerId), ctx?.snapshot),
     onSuccess: () => { if (!offline()) invalidate() },
   })
